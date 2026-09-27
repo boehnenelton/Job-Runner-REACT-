@@ -1,0 +1,58 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Records_Type": [
+    "JobSchema"
+  ],
+  "Job_Name": "Test Job (Initial)",
+  "Job_Goal": "Validate basic runner cycle and task state transition.",
+  "Job_Complete": false,
+  "Target_File": "Joob_Runner.py",
+  "Contextualize_Plan": true,
+  "Contextualize_Last": true,
+  "Fields": [
+    { "name": "task_id", "type": "string" },
+    { "name": "task_order", "type": "integer" },
+    { "name": "task_name", "type": "string" },
+    { "name": "task_description", "type": "string" },
+    { "name": "task_completed", "type": "boolean" },
+    { "name": "audit_enabled", "type": "boolean" },
+    { "name": "audit_passed", "type": "boolean" },
+    { "name": "audit_fail_reason", "type": "string" },
+    { "name": "task_context", "type": "string" },
+    { "name": "task_reference", "type": "string" },
+    { "name": "task_mandatory", "type": "boolean" },
+    { "name": "test_cmd", "type": "string" }
+  ],
+  "Values": [
+    [
+      "62a2a11b-e55b-46ca-834f-3411a0678bf8",
+      1,
+      "First Task",
+      "Verify system status and prepare target file environment.",
+      false,
+      false,
+      false,
+      "",
+      "[]",
+      "[]",
+      true,
+      ""
+    ],
+    [
+      "b41982a1-12c8-4721-a201-98fe871239aa",
+      2,
+      "Second Task",
+      "Perform code refactoring pass with AST validation gate.",
+      false,
+      true,
+      false,
+      "",
+      "[]",
+      "[]",
+      true,
+      ""
+    ]
+  ]
+}

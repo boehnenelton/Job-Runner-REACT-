@@ -1,0 +1,87 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Schema_Name": "Job Schema",
+  "Schema_Version": "1.0",
+  "Schema_Description": "Custom job schema for the NewAgent task creation and tracking system, managing individual task states and optional auditing.",
+  "Job_Goal": "Implement dual Attachment and Read-Only Context File panels with file/folder/ZIP import, selection checkboxes, radio toggle, mobile navigation, and AI prompt separation.",
+  "Goal_Rules": "Strict adherence to Tri-Color Palette, zero fluff, speech-to-text context decoding, JSZip extraction, and vanilla JS parity.",
+  "Job_Type": "feature",
+  "Job_Subtype": "attachment_context_panels",
+  "Contextualize_Plan": true,
+  "Contextualize_Last": true,
+  "Job_Complete": true,
+  "Creation_Date": "2026-09-27",
+  "Completion_Date": "2026-09-27",
+  "Records_Type": [
+    "JobTask"
+  ],
+  "Fields": [
+    { "name": "task_id", "type": "string" },
+    { "name": "task_order", "type": "integer" },
+    { "name": "task_name", "type": "string" },
+    { "name": "task_description", "type": "string" },
+    { "name": "task_completed", "type": "boolean" },
+    { "name": "audit_enabled", "type": "boolean" },
+    { "name": "audit_passed", "type": "boolean" },
+    { "name": "audit_fail_reason", "type": "string" },
+    { "name": "task_context", "type": "array" },
+    { "name": "task_reference", "type": "array" },
+    { "name": "task_mandatory", "type": "boolean" }
+  ],
+  "Values": [
+    [
+      "task-attach-engine",
+      1,
+      "Update Prompt Synthesis Engine for Context & Work Attachments",
+      "Update assembleJobPrompt in lib_bejson_Runner_engine.ts to separate read-only context study material from work attachments and respect active inclusion checkboxes.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      [],
+      true
+    ],
+    [
+      "task-attach-ui-react",
+      2,
+      "Implement Dual Panels in React (Attachments & Context)",
+      "Build UI in src/App.tsx with Radio switcher, file/folder/ZIP importers (via JSZip), per-file active checkboxes, mobile navigation menu toggle, and prompt integration.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      [],
+      true
+    ],
+    [
+      "task-attach-ui-js",
+      3,
+      "Mirror Functionality to Vanilla JS and JS Libraries",
+      "Update src/lib/lib_js/lib_bejson_Runner_engine.js and /js mirror with identical attachment & context file handling and ZIP/folder reading.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      [],
+      true
+    ],
+    [
+      "task-attach-docs",
+      4,
+      "Update Ledgers, UI Notes, Prompts, and Component Specs",
+      "Update dev/ui-notes.md, dev/prompts.md, dev/ui-components.md, and bump bejson_project.json to v3.1.7 / PKG105.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      [],
+      true
+    ]
+  ]
+}

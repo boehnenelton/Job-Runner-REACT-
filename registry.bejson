@@ -1,0 +1,37 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Records_Type": [
+    "JobRegistry"
+  ],
+  "Fields": [
+    { "name": "entry_id", "type": "string" },
+    { "name": "entry_name", "type": "string" },
+    { "name": "entry_slug", "type": "string" },
+    { "name": "entry_type", "type": "string" },
+    { "name": "file_path", "type": "string" },
+    { "name": "created_date", "type": "string" },
+    { "name": "modified_date", "type": "string" }
+  ],
+  "Values": [
+    [
+      "reg-job-001",
+      "Test Job (Initial)",
+      "test_job_initial",
+      "schema",
+      "jobs/test_job.json",
+      "2026-09-20",
+      "2026-09-27"
+    ],
+    [
+      "reg-job-002",
+      "TypeScript Library Mirroring",
+      "typescript_library_mirroring",
+      "schema",
+      "jobs/typescript_mirror_job.json",
+      "2026-09-27",
+      "2026-09-27"
+    ]
+  ]
+}

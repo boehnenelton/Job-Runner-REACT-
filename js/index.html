@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobMaker &mdash; Vanilla JS Mirror</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Source+Code+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <link rel="stylesheet" href="/js/style.css">
+</head>
+<body>
+
+  <!-- Top Header Toolbar -->
+  <header class="jm-header">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <h1 class="jm-header__title">JobMaker</h1>
+      <span class="jm-header__sub">v3.1.7 (JS Mirror)</span>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="jm-btn jm-btn--red" id="globalRunBtn">&#9654; Run Next Task</button>
+      <button class="jm-btn" id="aboutBtn">About &amp; Info</button>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <div class="jm-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="jm-sidebar">
+      <div class="jm-sidebar__nav">
+        <div style="font-size:0.65rem;text-transform:uppercase;color:#777;padding:6px 8px;font-weight:700;">Navigation</div>
+        <button class="jm-sidebar__btn jm-sidebar__btn--active" data-nav="hub">Jobs &amp; Hub</button>
+        <button class="jm-sidebar__btn" data-nav="editor">Job Editor</button>
+        <button class="jm-sidebar__btn" data-nav="attachments">Attachments &amp; Context</button>
+        <button class="jm-sidebar__btn" data-nav="templates">Templates</button>
+        <button class="jm-sidebar__btn" data-nav="generate">Generate Job (AI)</button>
+        <button class="jm-sidebar__btn" data-nav="keys">Key Manager</button>
+      </div>
+
+      <div style="padding:12px;border-top:1px solid #222;font-size:0.75rem;color:#777;">
+        <div style="color:#FFF;font-weight:700;">Elton Boehnen</div>
+        <div>boehnenelton2024@gmail.com</div>
+        <div style="margin-top:6px;font-family:monospace;font-size:0.7rem;">BEJSON 104a Vanilla</div>
+      </div>
+    </aside>
+
+    <!-- Main Content Panel -->
+    <main class="jm-main">
+      <div id="statusLine" style="margin-bottom:14px;font-weight:700;font-size:0.85rem;color:var(--red);">
+        System ready.
+      </div>
+
+      <!-- Hub Section -->
+      <section data-section="hub">
+        <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:12px;text-transform:uppercase;">Registry &amp; Jobs Hub</h2>
+        <div style="border:1px solid #000;padding:16px;background:#FFF;max-width:650px;">
+          <label>Select Registered Job</label>
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            <select id="hubPicker" style="flex:1;"></select>
+            <button class="jm-btn jm-btn--red" onclick="window.loadSelectedJob()">Load</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Attachments & Context Files Section -->
+      <section data-section="attachments" style="display:none;">
+        <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:12px;text-transform:uppercase;">File Attachments &amp; Context Materials</h2>
+        
+        <!-- Radio Box Switcher -->
+        <div style="border:1px solid #000;padding:12px;background:#FFF;margin-bottom:14px;display:flex;gap:20px;">
+          <label style="display:flex;align-items:center;gap:6px;margin:0;cursor:pointer;">
+            <input type="radio" name="jsRadioPanel" value="context" checked onchange="window.setPanelType('context')">
+            <span>Context Files (Read-Only Study &amp; Learning)</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;margin:0;cursor:pointer;">
+            <input type="radio" name="jsRadioPanel" value="work" onchange="window.setPanelType('work')">
+            <span>Work Attachments (Task Target Files)</span>
+          </label>
+        </div>
+
+        <div id="panelExplanation" style="border:1px solid #000;padding:12px;background:#FFF;margin-bottom:14px;font-size:0.8rem;line-height:1.4;">
+          <strong>Read-Only Context Files:</strong> Ingested for AI to study and learn from. The AI will never replicate or overwrite these files.
+        </div>
+
+        <!-- Import Buttons -->
+        <div style="border:1px solid #000;padding:14px;background:#FFF;margin-bottom:14px;display:flex;gap:10px;">
+          <input type="file" id="jsSingleFileInput" style="display:none;" onchange="window.handleJsSingleFile(event)">
+          <button class="jm-btn" onclick="document.getElementById('jsSingleFileInput').click()">Import File</button>
+
+          <input type="file" id="jsFolderInput" webkitdirectory directory style="display:none;" onchange="window.handleJsFolder(event)">
+          <button class="jm-btn" onclick="document.getElementById('jsFolderInput').click()">Import Folder</button>
+
+          <input type="file" id="jsZipInput" accept=".zip" style="display:none;" onchange="window.handleJsZip(event)">
+          <button class="jm-btn" onclick="document.getElementById('jsZipInput').click()">Import ZIP</button>
+        </div>
+
+        <!-- Files List -->
+        <div id="jsFilesListContainer" style="border:1px solid #000;padding:12px;background:#FFF;"></div>
+      </section>
+
+      <!-- Editor Section -->
+      <section data-section="editor" style="display:none;">
+        <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:12px;text-transform:uppercase;">Job Editor</h2>
+        <div style="max-width:750px;space-y:14px;">
+          <label>Job Name</label>
+          <input type="text" id="jobNameInput" readonly>
+
+          <label>Target File</label>
+          <input type="text" id="targetFileInput" value="Joob_Runner.py">
+
+          <label>Job Goal</label>
+          <textarea id="jobGoalText" rows="2"></textarea>
+
+          <div style="margin:20px 0 10px;">
+            <h3 style="font-size:0.9rem;font-weight:800;text-transform:uppercase;">Task Sequence</h3>
+          </div>
+          <div id="taskListContainer"></div>
+        </div>
+      </section>
+
+      <!-- Generate Job Section -->
+      <section data-section="generate" style="display:none;">
+        <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:12px;text-transform:uppercase;">AI Job Document Generator</h2>
+        
+        <div style="border:1px solid #000;padding:16px;background:#FFF;margin-bottom:14px;max-width:750px;">
+          <p style="font-size:0.8rem;color:#555;margin-bottom:14px;line-height:1.4;">
+            Describe what you want your job to do in plain English. The AI will design a valid BEJSON 104a schema with logical tasks and verification steps.
+          </p>
+
+          <label style="font-size:0.75rem;font-weight:800;text-transform:uppercase;display:block;margin-bottom:4px;">Describe Job Goals &amp; Requirements *</label>
+          <textarea id="genPromptInput" rows="4" placeholder="e.g. Refactor Joob_Runner.py to add AST syntax validation gates, atomic diff review, and safe rollback." style="width:100%;padding:8px;font-family:monospace;font-size:0.8rem;border:1px solid #000;margin-bottom:12px;box-sizing:border-box;"></textarea>
+
+          <div style="display:grid;grid-template-cols:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div>
+              <label style="font-size:0.75rem;font-weight:800;text-transform:uppercase;display:block;margin-bottom:4px;">Suggested Job Name</label>
+              <input type="text" id="genJobNameInput" placeholder="e.g. Python AST Gate" style="width:100%;padding:6px;border:1px solid #000;font-size:0.8rem;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:0.75rem;font-weight:800;text-transform:uppercase;display:block;margin-bottom:4px;">Target Script / File</label>
+              <input type="text" id="genTargetFileInput" value="Joob_Runner.py" style="width:100%;padding:6px;border:1px solid #000;font-size:0.8rem;box-sizing:border-box;">
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-cols:1fr 1fr;gap:10px;margin-bottom:16px;">
+            <div>
+              <label style="font-size:0.75rem;font-weight:800;text-transform:uppercase;display:block;margin-bottom:4px;">Job Type &amp; Subtype</label>
+              <div style="display:flex;gap:4px;">
+                <select id="genJobTypeSelect" style="flex:1;padding:6px;border:1px solid #000;font-size:0.8rem;">
+                  <option value="feature">feature</option>
+                  <option value="refactor">refactor</option>
+                  <option value="script">script</option>
+                  <option value="ui">ui</option>
+                  <option value="custom">custom</option>
+                </select>
+                <select id="genJobSubtypeSelect" style="flex:1;padding:6px;border:1px solid #000;font-size:0.8rem;">
+                  <option value="typescript">typescript</option>
+                  <option value="python">python</option>
+                  <option value="react">react</option>
+                  <option value="bash">bash</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:0.75rem;font-weight:800;text-transform:uppercase;display:block;margin-bottom:4px;">Step Count &amp; Model</label>
+              <div style="display:flex;gap:4px;">
+                <input type="number" id="genStepCountInput" value="5" min="2" max="15" style="width:50px;padding:6px;border:1px solid #000;font-size:0.8rem;text-align:center;">
+                <select id="genModelSelect" style="flex:1;padding:6px;border:1px solid #000;font-size:0.8rem;">
+                  <option value="gemini-3.6-flash">gemini-3.6-flash</option>
+                  <option value="gemini-3.7-flash">gemini-3.7-flash</option>
+                  <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <button class="jm-btn jm-btn--red" id="triggerGenBtn" onclick="window.generateJobAI()" style="width:100%;font-weight:800;">Generate Job Document</button>
+        </div>
+
+        <!-- Result Box (Hidden initially) -->
+        <div id="genResultBox" style="border:1px solid #000;padding:16px;background:#FFF;max-width:750px;margin-top:14px;" hidden>
+          <div style="display:flex;justify-content:space-between;align-items:center;border-b:1px solid #000;padding-bottom:8px;margin-bottom:12px;">
+            <h3 style="font-size:0.9rem;font-weight:800;text-transform:uppercase;margin:0;">Synthesized BEJSON Job</h3>
+            <button class="jm-btn jm-btn--red" onclick="window.loadGeneratedJobIntoActive()">Load Into Editor</button>
+          </div>
+          <div id="genSummaryStats" style="font-size:0.8rem;margin-bottom:12px;font-family:monospace;color:var(--red);"></div>
+          
+          <h4 style="font-size:0.8rem;font-weight:800;text-transform:uppercase;margin-bottom:6px;">Task Steps Mapping</h4>
+          <div id="genTasksTable" style="font-size:0.8rem;margin-bottom:14px;border:1px solid #EEE;background:#FAFAFA;padding:8px;"></div>
+
+          <h4 style="font-size:0.8rem;font-weight:800;text-transform:uppercase;margin-bottom:6px;">Diagnostic Traces &amp; Self-Healing Feedbacks</h4>
+          <div id="genDiagnosticsView" style="font-size:0.75rem;font-family:monospace;background:#000;color:#FFF;padding:10px;margin-bottom:12px;max-height:150px;overflow-y:auto;white-space:pre-wrap;"></div>
+
+          <h4 style="font-size:0.8rem;font-weight:800;text-transform:uppercase;margin-bottom:6px;">Raw Code Preview</h4>
+          <pre id="genRawCodeView" style="font-size:0.75rem;font-family:monospace;background:#F9F9F9;border:1px solid #DDD;padding:10px;max-height:200px;overflow:auto;margin:0;"></pre>
+        </div>
+      </section>
+
+      <!-- Templates Section -->
+      <section data-section="templates" style="display:none;">
+        <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:12px;text-transform:uppercase;">Job Templates</h2>
+        <div id="templatesListContainer" style="max-width:700px;"></div>
+      </section>
+
+      <!-- Key Manager Section -->
+      <section data-section="keys" style="display:none;">
+        <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:12px;text-transform:uppercase;">Key Store (BEJSON 104a)</h2>
+        <div style="border:1px solid #000;padding:16px;background:#FFF;max-width:650px;">
+          <p style="font-size:0.8rem;color:#555;margin-bottom:12px;">
+            Configure API keys for round-robin rotation. Keys are maintained in browser storage only.
+          </p>
+          <div id="keySlotsContainer"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Verified Candidate Diff Modal -->
+  <div class="jm-modal" id="diffModal" hidden>
+    <div class="jm-modal__box">
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:8px;text-transform:uppercase;">Verified Candidate Diff</h3>
+      <div id="diffTaskInfo" style="font-size:0.82rem;font-family:monospace;margin-bottom:10px;color:#555;"></div>
+      <pre class="diff-view" id="diffView"></pre>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button class="jm-btn" onclick="window.discardDiff()">Discard</button>
+        <button class="jm-btn jm-btn--red" onclick="window.commitDiff()">Approve &amp; Commit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- File Preview Modal -->
+  <div class="jm-modal" id="filePreviewModal" hidden>
+    <div class="jm-modal__box" style="max-width:700px;">
+      <h3 id="previewTitle" style="font-size:1rem;font-weight:800;margin-bottom:8px;text-transform:uppercase;">File Content</h3>
+      <pre id="previewBody" class="diff-view" style="max-height:350px;white-space:pre;"></pre>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+        <button class="jm-btn" onclick="document.getElementById('filePreviewModal').hidden=true">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- About / Meta Info Modal -->
+  <div class="jm-modal" id="aboutModal" hidden>
+    <div class="jm-modal__box">
+      <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:12px;text-transform:uppercase;">JobMaker &mdash; About &amp; Crediting</h3>
+      <div style="font-size:0.85rem;line-height:1.6;margin-bottom:16px;">
+        <div><strong>Author:</strong> Elton Boehnen</div>
+        <div><strong>Email:</strong> boehnenelton2024@gmail.com</div>
+        <div><strong>Website:</strong> boehnenelton2024.pages.dev</div>
+        <div><strong>GitHub:</strong> github.com/boehnenelton</div>
+        <div><strong>Version:</strong> 3.1.7 (PKG105)</div>
+      </div>
+      <button class="jm-btn jm-btn--red" id="closeAboutBtn">Close</button>
+    </div>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

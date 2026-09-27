@@ -1,0 +1,8 @@
+{
+  "name": "JobMaker & Job Runner",
+  "description": "Unified standalone job creation system and self-evolving runner built with BEJSON TypeScript libraries and Google Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

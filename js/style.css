@@ -1,0 +1,230 @@
+/**
+ * File: /js/style.css
+ * Description: Vanilla JavaScript mirror stylesheet conforming strictly to the Tri-Color Palette
+ * Author: Elton Boehnen · boehnenelton2024@gmail.com
+ */
+
+:root {
+  --bg: #FFFFFF;
+  --fg: #000000;
+  --red: #DE2626;
+  --border: #000000;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header.jm-header {
+  background: #000000;
+  color: #FFFFFF;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--border);
+  flex-shrink: 0;
+}
+
+.jm-header__title {
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.jm-header__sub {
+  color: var(--red);
+  font-family: 'Source Code Pro', monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-left: 8px;
+}
+
+.jm-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.jm-sidebar {
+  width: 220px;
+  background: #000000;
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 1px solid #000000;
+  flex-shrink: 0;
+}
+
+.jm-sidebar__nav {
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.jm-sidebar__btn {
+  background: transparent;
+  color: #CCCCCC;
+  border: none;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.jm-sidebar__btn:hover {
+  background: #1A1A1A;
+  color: #FFFFFF;
+}
+
+.jm-sidebar__btn--active {
+  background: var(--red);
+  color: #FFFFFF;
+}
+
+.jm-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  background: #FFFFFF;
+}
+
+.jm-tabbar {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.jm-tabbar__tab {
+  background: #FFFFFF;
+  border: none;
+  border-right: 1px solid #DDD;
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.jm-tabbar__tab--active {
+  border-bottom: 2px solid var(--red);
+  color: var(--red);
+}
+
+label {
+  display: block;
+  font-weight: 700;
+  margin: 14px 0 6px;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+input[type=text], input[type=password], select, textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  background: #FFFFFF;
+  color: #000000;
+}
+
+.jm-btn {
+  background: #FFFFFF;
+  color: #000000;
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+
+.jm-btn:hover {
+  background: var(--red);
+  color: #FFFFFF;
+  border-color: var(--red);
+}
+
+.jm-btn--red {
+  background: var(--red);
+  color: #FFFFFF;
+  border-color: var(--red);
+}
+
+.jm-btn--red:hover {
+  background: #000000;
+  border-color: #000000;
+}
+
+.jm-task-row {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+  align-items: flex-start;
+  background: #FFFFFF;
+}
+
+pre.diff-view {
+  background: #000000;
+  color: #FFFFFF;
+  padding: 14px;
+  font-family: 'Source Code Pro', monospace;
+  font-size: 0.8rem;
+  max-height: 420px;
+  overflow: auto;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.jm-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+
+.jm-modal[hidden] {
+  display: none;
+}
+
+.jm-modal__box {
+  background: #FFFFFF;
+  border: 2px solid var(--border);
+  padding: 24px;
+  width: 100%;
+  max-width: 680px;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  background: #000000;
+  color: #FFFFFF;
+  font-family: 'Source Code Pro', monospace;
+}

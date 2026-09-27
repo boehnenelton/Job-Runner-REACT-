@@ -1,0 +1,113 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Schema_Name": "Job Schema",
+  "Schema_Version": "1.0",
+  "Schema_Description": "Custom job schema for the NewAgent task creation and tracking system, managing individual task states and optional auditing.",
+  "Job_Goal": "Rebuild JobMaker & Job Runner from Flask to TypeScript with full backward compatibility, core TS libraries integration, new templates, and vanilla JS mirror.",
+  "Goal_Rules": "Strict adherence to BEJSON field map caching, tri-color styling, Gemini SDK guidelines, Three-Tab Meta UI, and zero fluff.",
+  "Job_Type": "conversion",
+  "Job_Subtype": "fullstack_typescript",
+  "Contextualize_Plan": true,
+  "Contextualize_Last": true,
+  "Job_Complete": true,
+  "Creation_Date": "2026-09-27",
+  "Completion_Date": "2026-09-27",
+  "Records_Type": [
+    "JobTask"
+  ],
+  "Fields": [
+    { "name": "task_id", "type": "string" },
+    { "name": "task_order", "type": "integer" },
+    { "name": "task_name", "type": "string" },
+    { "name": "task_description", "type": "string" },
+    { "name": "task_completed", "type": "boolean" },
+    { "name": "audit_enabled", "type": "boolean" },
+    { "name": "audit_passed", "type": "boolean" },
+    { "name": "audit_fail_reason", "type": "string" },
+    { "name": "task_context", "type": "array" },
+    { "name": "task_reference", "type": "array" },
+    { "name": "task_mandatory", "type": "boolean" }
+  ],
+  "Values": [
+    [
+      "task-init-core-ts",
+      1,
+      "Install Core TypeScript Family Libraries",
+      "Deploy Elton Boehnen's immutable Core TypeScript Family Libraries into src/lib/.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      [],
+      true
+    ],
+    [
+      "task-init-runner-libs",
+      2,
+      "Create Runner Extension Family Libraries and JS Mirrors",
+      "Author lib_bejson_Runner_engine.ts, lib_bejson_Runner_templates.ts, and lib_bejson_Runner_keys.ts with matching mirrors in src/lib/lib_js/.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      [],
+      true
+    ],
+    [
+      "task-express-server",
+      3,
+      "Implement Full-Stack Express Server & Gemini Integration",
+      "Build server.ts with Express, Vite middleware mount, 100% backward compatible REST endpoints (/api/registry, /api/entry, /api/run/*, /api/templates), and @google/genai SDK server-side dispatch.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      [],
+      true
+    ],
+    [
+      "task-react-frontend",
+      4,
+      "Build React Application & Navigation",
+      "Develop Hub, Job Editor, Task Executor, Diff Viewer, Template Generator, Key Manager, and Three-Tab Meta UI adhering strictly to the Tri-Color Palette.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      [],
+      true
+    ],
+    [
+      "task-vanilla-mirror",
+      5,
+      "Build Root Vanilla JavaScript Mirror (/js)",
+      "Create full-featured client-side mirror in /js/index.html, /js/app.js, /js/style.css importing relatively from src/lib/lib_js/.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      [],
+      true
+    ],
+    [
+      "task-documentation-audit",
+      6,
+      "Compile Complete Ledger, Component Ledger, and Audit Logs",
+      "Update dev/ui-notes.md, dev/prompts.md, dev/ui-components.md, dev/security-notes.md, bejson_project.json, and perform verification compile.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      [],
+      true
+    ]
+  ]
+}

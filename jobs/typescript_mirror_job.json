@@ -1,0 +1,58 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Records_Type": [
+    "JobSchema"
+  ],
+  "Job_Name": "TypeScript Library Mirroring",
+  "Job_Goal": "Ensure 1:1 functional vanilla JavaScript parity across all application libraries in src/lib/lib_js/.",
+  "Job_Complete": false,
+  "Target_File": "src/lib/lib_bejson_Runner_engine.ts",
+  "Contextualize_Plan": true,
+  "Contextualize_Last": true,
+  "Fields": [
+    { "name": "task_id", "type": "string" },
+    { "name": "task_order", "type": "integer" },
+    { "name": "task_name", "type": "string" },
+    { "name": "task_description", "type": "string" },
+    { "name": "task_completed", "type": "boolean" },
+    { "name": "audit_enabled", "type": "boolean" },
+    { "name": "audit_passed", "type": "boolean" },
+    { "name": "audit_fail_reason", "type": "string" },
+    { "name": "task_context", "type": "string" },
+    { "name": "task_reference", "type": "string" },
+    { "name": "task_mandatory", "type": "boolean" },
+    { "name": "test_cmd", "type": "string" }
+  ],
+  "Values": [
+    [
+      "ts-step-1",
+      1,
+      "Audit Exported Functions & Field Map Usage",
+      "Inspect module exports and ensure all BEJSON accesses use cached field maps.",
+      true,
+      true,
+      true,
+      "",
+      "[]",
+      "[]",
+      true,
+      ""
+    ],
+    [
+      "ts-step-2",
+      2,
+      "Verify Browser Portability & Zero Node Modules",
+      "Confirm that mirrored files execute natively in modern web browsers without imports from node_modules.",
+      false,
+      true,
+      false,
+      "",
+      "[]",
+      "[]",
+      true,
+      ""
+    ]
+  ]
+}
