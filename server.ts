@@ -300,6 +300,9 @@ async function startServer() {
     cleanupExpiredStages();
 
     const { entry_id, target_file, custom_prompt, api_key, model } = req.body;
+    let activeTask: any = null;
+    let resolvedTarget: string | null = null;
+    let chosenModel = model || DEFAULT_MODEL;
 
     try {
       const regDoc = syncRegistryFromDisk();
@@ -323,16 +326,27 @@ async function startServer() {
         return res.status(404).json({ ok: false, error: "Job entry not found." });
       }
 
-      const { activeTask, lastOutput, allCompleted } = getActivePendingTask(jobDoc);
+      const pending = getActivePendingTask(jobDoc);
+      activeTask = pending.activeTask;
+      const lastOutput = pending.lastOutput;
+      const allCompleted = pending.allCompleted;
+
       if (allCompleted || !activeTask) {
         return res.json({ ok: true, all_completed: true, message: "All tasks completed." });
       }
 
       // Resolve target file
       const targetRel = target_file || (jobDoc as any)["Target_File"] || "Joob_Runner.py";
-      const { resolved: resolvedTarget, error: targetErr } = resolveContainedPath(targetRel);
-      if (targetErr || !resolvedTarget) {
+      const { resolved: resolvedTargetCandidate, error: targetErr } = resolveContainedPath(targetRel);
+      if (targetErr || !resolvedTargetCandidate) {
         return res.status(403).json({ ok: false, error: targetErr || "Target file resolution forbidden." });
+      }
+      resolvedTarget = resolvedTargetCandidate;
+
+      // Ensure target directory exists on disk
+      const targetDir = path.dirname(resolvedTarget);
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
       }
 
       let originalCode = "";
@@ -374,46 +388,47 @@ async function startServer() {
         },
       });
 
-      let chosenModel = model || (jobDoc as any)["Selected_Model"] || DEFAULT_MODEL;
+      chosenModel = model || (jobDoc as any)["Selected_Model"] || DEFAULT_MODEL;
       let aiResponse;
       let synthesizedText = "";
+      let fallbackChain: string[] = [chosenModel];
+      if (chosenModel !== "gemini-3.5-flash-lite") fallbackChain.push("gemini-3.5-flash-lite");
+      if (chosenModel !== "gemini-3.6-flash") fallbackChain.push("gemini-3.6-flash");
+      if (chosenModel !== "gemini-2.5-flash") fallbackChain.push("gemini-2.5-flash");
 
-      try {
-        aiResponse = await ai.models.generateContent({
-          model: chosenModel,
-          contents: turnPrompt,
-          config: {
-            systemInstruction,
-            temperature: 0.2,
-          },
-        });
-        synthesizedText = aiResponse.text || "";
-      } catch (sdkErr: any) {
-        const errMsg = String(sdkErr.message || "").toLowerCase();
-        const isQuotaErr = errMsg.includes("quota") || errMsg.includes("limit") || errMsg.includes("exhausted") || errMsg.includes("429") || errMsg.includes("overloaded");
-        if (isQuotaErr && chosenModel !== "gemini-3.5-flash-lite") {
-          console.warn(`[Gemini SDK] Rate limit hit on model ${chosenModel}. Degrading automatically to gemini-3.5-flash-lite and retrying...`);
-          try {
-            chosenModel = "gemini-3.5-flash-lite";
-            aiResponse = await ai.models.generateContent({
-              model: chosenModel,
-              contents: turnPrompt,
-              config: {
-                systemInstruction,
-                temperature: 0.2,
-              },
-            });
-            synthesizedText = aiResponse.text || "";
-          } catch (retryErr: any) {
-            throw new Error(`Stage evolution failed on original model ${model} and fallback model gemini-3.5-flash-lite: ${retryErr.message}`);
+      let lastModelError: Error | null = null;
+      let modelUsed = chosenModel;
+
+      for (const candidateModel of fallbackChain) {
+        try {
+          aiResponse = await ai.models.generateContent({
+            model: candidateModel,
+            contents: turnPrompt,
+            config: {
+              systemInstruction,
+              temperature: 0.2,
+            },
+          });
+          synthesizedText = aiResponse.text || "";
+          if (synthesizedText.trim()) {
+            modelUsed = candidateModel;
+            chosenModel = candidateModel;
+            break;
           }
-        } else {
-          throw sdkErr;
+        } catch (sdkErr: any) {
+          lastModelError = sdkErr;
+          console.warn(`[Gemini SDK] Execution on model ${candidateModel} failed: ${sdkErr.message}. Attempting fallback if available...`);
         }
       }
 
       if (!synthesizedText.trim()) {
-        return res.status(502).json({ ok: false, error: "Model returned an empty response." });
+        const errorDetail = lastModelError ? lastModelError.message : "Model returned an empty response across all attempted models.";
+        return res.status(502).json({
+          ok: false,
+          error: `Stage evolution synthesis failed: ${errorDetail}`,
+          attempted_models: fallbackChain,
+          details: lastModelError?.stack || String(lastModelError),
+        });
       }
 
       const candidateCode = stripMarkdownFences(synthesizedText);
@@ -474,9 +489,19 @@ async function startServer() {
         target_file: path.basename(resolvedTarget),
         diff,
         candidate_code: candidateCode,
+        model_used: modelUsed,
       });
     } catch (err: any) {
-      res.status(500).json({ ok: false, error: `Stage evolution failed: ${err.message}` });
+      console.error("[/api/run/stage error]", err);
+      res.status(500).json({
+        ok: false,
+        error: `Stage evolution failed: ${err.message}`,
+        details: err.stack || String(err),
+        model: chosenModel,
+        task_order: activeTask?.taskOrder,
+        task_name: activeTask?.taskName,
+        target_file: resolvedTarget ? path.basename(resolvedTarget) : undefined,
+      });
     }
   });
 
@@ -493,6 +518,10 @@ async function startServer() {
 
     try {
       // 1. Atomic write candidate code to target file
+      const targetDir = path.dirname(stage.targetFile);
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
       const tempPath = `${stage.targetFile}.tmp.${Date.now()}`;
       fs.writeFileSync(tempPath, stage.candidateCode, "utf-8");
       fs.renameSync(tempPath, stage.targetFile);
@@ -519,10 +548,26 @@ async function startServer() {
         const tasks = extractTasksFromJobDoc(jobDoc);
         const activeT = tasks.find((t) => t.taskOrder === stage.taskOrder);
         if (activeT) {
+          const isCreativeOrDocOrWeb = 
+            jobDoc.Job_Type === "creative" || 
+            jobDoc.Job_Type === "documentation" || 
+            jobDoc.Job_Type === "website" || 
+            jobDoc.Job_Type === "ui" || 
+            jobDoc.Job_Type === "frontend" || 
+            jobDoc.Job_Subtype === "novel" || 
+            String(jobDoc.Job_Subtype).includes("book") ||
+            String(jobDoc.Job_Subtype).includes("website") ||
+            String(jobDoc.Job_Subtype).includes("multipage") ||
+            String(jobDoc.Job_Subtype).includes("web");
+
+          const traceSummary = isCreativeOrDocOrWeb 
+            ? stage.candidateCode 
+            : `Task ${stage.taskOrder} [${stage.taskName}] committed atomically.`;
+
           const updatedDoc = commitTaskInJobDoc(
             jobDoc,
             activeT.taskId,
-            `Task ${stage.taskOrder} [${stage.taskName}] committed atomically.`
+            traceSummary
           );
           fs.writeFileSync(jobFilePath, serialize(updatedDoc, 2), "utf-8");
           allDone = Boolean((updatedDoc as any)["Job_Complete"]);

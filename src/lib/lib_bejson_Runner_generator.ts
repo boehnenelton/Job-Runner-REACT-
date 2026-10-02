@@ -3,12 +3,12 @@
  * Family:          Runner
  * Module Purpose:  AI Job generation prompt synthesis, spreadsheet analogy instruction engine, and self-correcting validation feedback loop.
  * Architecture:    BEJSON 104a Job schema generator with structured output validation, error code diagnosis, and iterative prompt injection.
- * Version:         3.1.8
+ * Version:         3.1.9
  * Release_Version: 300
- * Date:            2026-09-27
+ * Date:            2026-10-02
  * Author:          Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
  * Format_Creator:  Elton Boehnen
- * RELATIONAL_ID:   91cf2084-28ab-41c9-8902-58194a2b1092
+ * RELATIONAL_ID:   50da1b82-93e1-45ec-8931-29e18a09cf31
  */
 
 import {
@@ -108,7 +108,13 @@ Imagine BEJSON 104a as a single-sheet Spreadsheet Workbook (like Google Sheets o
      * test_cmd (string): command string (e.g. "npm test" or "python3 -m py_compile {SCRIPT}") or "".
    - No row can skip a cell! Empty or unassigned cells must be "" or null or [] to preserve column alignment.
 
-5. OUTPUT REQUIREMENT:
+5. MULTI-PAGE WEBSITE PLANNING PATTERN:
+   When tasked with generating a plan for a website, multi-page application, or web feed system:
+   - Step 1 must establish the Master Layout / Shell Template (responsive header toolbar, global navigation links to all planned pages, brand mark, CSS design system tokens, persistent footer, mobile hamburger flyout).
+   - Intermediate steps (Steps 2 to N-1) each generate one specific page (Index/Landing, Feed/Catalog, Features, About, Contact, etc.) derived directly off the master template so each page inherits identical header branding, nav items, and styling.
+   - The final step (Step N) must be a Navigation & Cross-Page Hyperlink Integrity Audit verifying that every page contains the unified nav bar, all relative links (e.g. index.html, feed.html, features.html, about.html, contact.html) resolve without dead ends or 404s, active page markers accurately reflect current route, and mobile responsive menus behave cleanly.
+
+6. OUTPUT REQUIREMENT:
    - Return strictly the valid JSON object conforming to BEJSON 104a.
    - Do not wrap in markdown quotes if possible, or use standard JSON.`;
 

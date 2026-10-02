@@ -1,0 +1,169 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Records_Type": [
+    "JobSchema"
+  ],
+  "Job_Goal": "Architect and generate a complete multi-page website. Construct the master shell layout & navigation template first. Derive subsequent pages from the master template to guarantee styling and brand consistency, concluding with a comprehensive navigation and cross-page hyperlink audit verifying that every page contains identical navigation links with zero dead ends.",
+  "Job_Type": "website",
+  "Job_Subtype": "multipage_html",
+  "Target_File": "website/index.html",
+  "Contextualize_Plan": true,
+  "Contextualize_Last": true,
+  "Job_Complete": false,
+  "Creation_Date": "2026-10-02",
+  "Completion_Date": "",
+  "Fields": [
+    {
+      "name": "task_id",
+      "type": "string"
+    },
+    {
+      "name": "task_order",
+      "type": "integer"
+    },
+    {
+      "name": "task_name",
+      "type": "string"
+    },
+    {
+      "name": "task_description",
+      "type": "string"
+    },
+    {
+      "name": "task_completed",
+      "type": "boolean"
+    },
+    {
+      "name": "audit_enabled",
+      "type": "boolean"
+    },
+    {
+      "name": "audit_passed",
+      "type": "boolean"
+    },
+    {
+      "name": "audit_fail_reason",
+      "type": "string"
+    },
+    {
+      "name": "task_context",
+      "type": "string"
+    },
+    {
+      "name": "task_reference",
+      "type": "string"
+    },
+    {
+      "name": "task_mandatory",
+      "type": "boolean"
+    },
+    {
+      "name": "test_cmd",
+      "type": "string"
+    }
+  ],
+  "Values": [
+    [
+      "task-muradfoj-1",
+      1,
+      "Master Shell Layout & Navigation Template",
+      "Author the master layout template (header, navigation links for Home, Feed/Catalog, Features, About, Contact, responsive mobile drawer, branding, typography rules, color tokens, and persistent footer). This master template establishes the design system and navigation blueprint that every subsequent page inherits.",
+      false,
+      true,
+      false,
+      "",
+      "[]",
+      "[]",
+      true,
+      ""
+    ],
+    [
+      "task-muradfoj-2",
+      2,
+      "Home & Landing Showcase Page (index.html)",
+      "Derive the primary Landing page off the master layout template. Include a compelling hero section, value proposition grid, primary call-to-actions, and active navigation state for 'Home'. Ensure all navigation links point cleanly to planned sibling pages.",
+      false,
+      true,
+      false,
+      "",
+      "[]",
+      "[]",
+      true,
+      ""
+    ],
+    [
+      "task-muradfoj-3",
+      3,
+      "Feed / Catalog / Content Grid Page (feed.html)",
+      "Derive the dynamic Feed / Catalog page off the master layout template. Implement interactive content cards, category filter tabs, search input, and active navigation state for 'Feed'. Maintain identical header, footer, and navigation architecture.",
+      false,
+      true,
+      false,
+      "",
+      "[]",
+      "[]",
+      true,
+      ""
+    ],
+    [
+      "task-muradfoj-4",
+      4,
+      "Features & Deep-Dive Specifications Page (features.html)",
+      "Derive the Features page off the master layout template. Present technical architecture grids, capability callouts, comparison matrix, and active navigation state for 'Features' with complete cross-page internal linking.",
+      false,
+      true,
+      false,
+      "",
+      "[]",
+      "[]",
+      true,
+      ""
+    ],
+    [
+      "task-muradfoj-5",
+      5,
+      "About & Team Story Page (about.html)",
+      "Derive the About page off the master layout template. Author the mission narrative, creator attribution (Elton Boehnen), core values, and active navigation state for 'About'.",
+      false,
+      true,
+      false,
+      "",
+      "[]",
+      "[]",
+      true,
+      ""
+    ],
+    [
+      "task-muradfoj-6",
+      6,
+      "Contact, Inquiries & Feedback Page (contact.html)",
+      "Derive the Contact page off the master layout template. Implement structured form fields (Name, Email, Message), validation feedback, and active navigation state for 'Contact' with links back to all primary pages.",
+      false,
+      true,
+      false,
+      "",
+      "[]",
+      "[]",
+      true,
+      ""
+    ],
+    [
+      "task-muradfoj-7",
+      7,
+      "Navigation & Cross-Page Hyperlink Integrity Audit",
+      "Perform an exhaustive navigation integrity audit across all generated pages: verify every page contains the unified navigation bar, all relative links (index.html, feed.html, features.html, about.html, contact.html) resolve without dead ends, active page markers accurately reflect current route, and mobile responsive menus behave identically.",
+      false,
+      true,
+      false,
+      "",
+      "[]",
+      "[]",
+      true,
+      ""
+    ]
+  ],
+  "Execution_Traces": {},
+  "Job_Name": "Multi-Page Website Blueprint & Navigation Audit Pipeline"
+}

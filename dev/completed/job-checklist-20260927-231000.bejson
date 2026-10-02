@@ -1,0 +1,87 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Schema_Name": "Job Schema",
+  "Schema_Version": "1.0",
+  "Schema_Description": "Checklist governing the integration of the sequential chapter book writing template and context feeding mechanics.",
+  "Job_Goal": "Incorporate a high-fidelity book writing template where each chapter is generated one task at a time, ensuring that the previously completed chapter's full text and total plan scope are recursively fed to subsequent tasks as context.",
+  "Goal_Rules": "Strict compliance with Elton Boehnen core BEJSON standards, Tri-Color palette, 1:1 parity between TypeScript and JavaScript mirrors, and verified lint compliance.",
+  "Job_Type": "creative",
+  "Job_Subtype": "novel_evolution",
+  "Contextualize_Plan": true,
+  "Contextualize_Last": true,
+  "Job_Complete": true,
+  "Creation_Date": "2026-09-27",
+  "Completion_Date": "2026-09-27",
+  "Records_Type": [
+    "JobTask"
+  ],
+  "Fields": [
+    { "name": "task_id", "type": "string" },
+    { "name": "task_order", "type": "integer" },
+    { "name": "task_name", "type": "string" },
+    { "name": "task_description", "type": "string" },
+    { "name": "task_completed", "type": "boolean" },
+    { "name": "audit_enabled", "type": "boolean" },
+    { "name": "audit_passed", "type": "boolean" },
+    { "name": "audit_fail_reason", "type": "string" },
+    { "name": "task_context", "type": "array" },
+    { "name": "task_reference", "type": "array" },
+    { "name": "task_mandatory", "type": "boolean" }
+  ],
+  "Values": [
+    [
+      "task-write-novel-template",
+      1,
+      "Design and author the tmpl-creative-book template in RUNNER_TEMPLATES",
+      "Crafted a beautiful sequential book-writing template comprising 5 tasks (Prologue, Ch 1, Ch 2, Ch 3, and Epilogue) configured with jobType creative and jobSubtype novel.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      [],
+      true
+    ],
+    [
+      "task-evolve-context-feeding",
+      2,
+      "Update server runner execution to feed full candidate output text as lastOutput",
+      "Customized server.ts `/api/run/commit` to check if a job is of creative/documentation types and automatically write the full text of the newly completed chapter as the execution trace, which is loaded as lastOutput for the subsequent chapter.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      [],
+      true
+    ],
+    [
+      "task-js-mirror-parity",
+      3,
+      "Mirror tmpl-creative-book in Vanilla JS libraries",
+      "Incorporate tmpl-creative-book in the lib_bejson_Runner_templates.js mirror folder to maintain perfect 1:1 parity and portability across all code structures.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      [],
+      true
+    ],
+    [
+      "task-lint-and-ledger-update",
+      4,
+      "Run audits, compile verification, and append bejson_project.json change log",
+      "Compiled successfully, verified zero lint violations, bumped project version to 3.1.10 and package version to 107 inside bejson_project.json.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      [],
+      true
+    ]
+  ]
+}

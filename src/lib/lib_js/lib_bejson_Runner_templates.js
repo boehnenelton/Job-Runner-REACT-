@@ -8,7 +8,7 @@
  * Date:            2026-09-27
  * Author:          Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
  * Format_Creator:  Elton Boehnen
- * RELATIONAL_ID:   c3b88931-e129-478a-a634-118cf94a7e91
+ * RELATIONAL_ID:   fa910248-18e4-4ab2-8509-6d6281a941bf
  */
 
 export const OFFICIAL_JOB_FIELDS = [
@@ -240,6 +240,102 @@ export const RUNNER_TEMPLATES = [
       {
         name: "Append Timestamped Change Log Entry",
         description: "Increment package version in bejson_project.json and record change log entry with author attribution.",
+        auditEnabled: true,
+        mandatory: true,
+      },
+    ],
+  },
+  {
+    templateId: "tmpl-creative-book",
+    templateName: "Sequential Novel & Chapter Evolve Generator",
+    category: "Creative Writing",
+    description: "An evolutionary book-writing pipeline. Tasks are executed one step at a time, feeding the previous chapter's completed text and the full blueprint scope as a recursive learning context to generate the next chapter with seamless narrative flow.",
+    jobType: "creative",
+    jobSubtype: "novel",
+    defaultGoal: "Synthesize a high-fidelity narrative novel manuscript. Each chapter is constructed sequentially while preserving narrative continuity, theme coherence, and character arcs by feeding the full outline and prior written chapter as reference material.",
+    defaultTarget: "data/manuscript_draft.txt",
+    tasks: [
+      {
+        name: "Narrative Exposition, Premise & Prologue",
+        description: "Draft the introductory prologue. Introduce the main protagonist, core world-building principles, and set the mysterious thematic atmosphere. All subsequent chapters will build upon this foundation.",
+        auditEnabled: false,
+        mandatory: true,
+      },
+      {
+        name: "Chapter 1: The Inciting Incident & Confrontation",
+        description: "Evolve the narrative: generate Chapter 1. Introduce the unexpected conflict or call to action. Ensure character dialogue and emotional depth are consistent with the world established in the prologue.",
+        auditEnabled: false,
+        mandatory: true,
+      },
+      {
+        name: "Chapter 2: Rising Action & Emotional Core Evolution",
+        description: "Evolve the narrative: generate Chapter 2. Build tension and raise the stakes. The protagonist must face obstacles that expand on Chapter 1's incident while referencing the main goal.",
+        auditEnabled: false,
+        mandatory: true,
+      },
+      {
+        name: "Chapter 3: The Climax & Confrontation Resolution",
+        description: "Evolve the narrative: generate Chapter 3. Bring the conflict to its peak. Resolve the immediate tactical struggles while leaving space for narrative reflection in the epilogue.",
+        auditEnabled: false,
+        mandatory: true,
+      },
+      {
+        name: "Epilogue & Narrative Theme Review",
+        description: "Draft the final epilogue. Bring closure to the character arc, reflect on the thematic journey, and integrate a complete manuscript audit. Output the final aggregated narrative work.",
+        auditEnabled: false,
+        mandatory: true,
+      },
+    ],
+  },
+  {
+    templateId: "tmpl-website-multipage",
+    templateName: "Multi-Page Website Blueprint & Navigation Audit Pipeline",
+    category: "Frontend & React",
+    description: "An architectural website-building pipeline. Establishes the master layout & navigation template first, generates core pages (Index/Landing, Feed/Catalog, Features, About, Contact) derived from the master template to ensure visual coherence, and concludes with an automated Navigation & Cross-Page Hyperlink Integrity Audit verifying 100% route validity and responsive nav across all pages.",
+    jobType: "website",
+    jobSubtype: "multipage_html",
+    defaultGoal: "Architect and generate a complete multi-page website. Construct the master shell layout & navigation template first. Derive subsequent pages from the master template to guarantee styling and brand consistency, concluding with a comprehensive navigation and cross-page hyperlink audit verifying that every page contains identical navigation links with zero dead ends.",
+    defaultTarget: "website/index.html",
+    tasks: [
+      {
+        name: "Master Shell Layout & Navigation Template",
+        description: "Author the master layout template (header, navigation links for Home, Feed/Catalog, Features, About, Contact, responsive mobile drawer, branding, typography rules, color tokens, and persistent footer). This master template establishes the design system and navigation blueprint that every subsequent page inherits.",
+        auditEnabled: true,
+        mandatory: true,
+      },
+      {
+        name: "Home & Landing Showcase Page (index.html)",
+        description: "Derive the primary Landing page off the master layout template. Include a compelling hero section, value proposition grid, primary call-to-actions, and active navigation state for 'Home'. Ensure all navigation links point cleanly to planned sibling pages.",
+        auditEnabled: true,
+        mandatory: true,
+      },
+      {
+        name: "Feed / Catalog / Content Grid Page (feed.html)",
+        description: "Derive the dynamic Feed / Catalog page off the master layout template. Implement interactive content cards, category filter tabs, search input, and active navigation state for 'Feed'. Maintain identical header, footer, and navigation architecture.",
+        auditEnabled: true,
+        mandatory: true,
+      },
+      {
+        name: "Features & Deep-Dive Specifications Page (features.html)",
+        description: "Derive the Features page off the master layout template. Present technical architecture grids, capability callouts, comparison matrix, and active navigation state for 'Features' with complete cross-page internal linking.",
+        auditEnabled: true,
+        mandatory: true,
+      },
+      {
+        name: "About & Team Story Page (about.html)",
+        description: "Derive the About page off the master layout template. Author the mission narrative, creator attribution (Elton Boehnen), core values, and active navigation state for 'About'.",
+        auditEnabled: true,
+        mandatory: true,
+      },
+      {
+        name: "Contact, Inquiries & Feedback Page (contact.html)",
+        description: "Derive the Contact page off the master layout template. Implement structured form fields (Name, Email, Message), validation feedback, and active navigation state for 'Contact' with links back to all primary pages.",
+        auditEnabled: true,
+        mandatory: true,
+      },
+      {
+        name: "Navigation & Cross-Page Hyperlink Integrity Audit",
+        description: "Perform an exhaustive navigation integrity audit across all generated pages: verify every page contains the unified navigation bar, all relative links (index.html, feed.html, features.html, about.html, contact.html) resolve without dead ends, active page markers accurately reflect current route, and mobile responsive menus behave identically.",
         auditEnabled: true,
         mandatory: true,
       },

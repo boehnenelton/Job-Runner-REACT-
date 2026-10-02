@@ -36,12 +36,46 @@ let activeTab = "hub";
 let currentPanelType = "context";
 let attachedFilesList = [];
 
+let consoleLogs = (() => {
+  try {
+    const saved = localStorage.getItem("jobmaker_action_console_logs");
+    if (saved) return JSON.parse(saved);
+  } catch (_) {}
+  return [
+    {
+      id: "init-vanilla",
+      timestamp: new Date().toISOString(),
+      timeFormatted: new Date().toLocaleTimeString(),
+      category: "SYSTEM",
+      level: "INFO",
+      title: "Vanilla JS System Console Ready",
+      summary: "Tracking all stage evolutions, diff reviews, atomic commits, and API interactions with zero Node dependencies.",
+    },
+  ];
+})();
+
+export function logAction(entry) {
+  const now = new Date();
+  const newEntry = {
+    ...entry,
+    id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    timestamp: now.toISOString(),
+    timeFormatted: now.toLocaleTimeString(),
+  };
+  consoleLogs = [newEntry, ...consoleLogs].slice(0, 300);
+  try {
+    localStorage.setItem("jobmaker_action_console_logs", JSON.stringify(consoleLogs));
+  } catch (_) {}
+  renderConsoleLogs();
+}
+
 export async function initApp() {
   bindNavigation();
   await refreshRegistry();
   renderTemplates();
   renderKeySlots();
   renderAttachedFiles();
+  renderConsoleLogs();
 }
 
 function bindNavigation() {
@@ -80,6 +114,9 @@ function switchSection(name) {
   document.querySelectorAll("[data-nav]").forEach((btn) => {
     btn.classList.toggle("jm-sidebar__btn--active", btn.getAttribute("data-nav") === name);
   });
+  if (name === "console") {
+    renderConsoleLogs();
+  }
 }
 
 export function setPanelType(type) {
@@ -313,11 +350,32 @@ function renderTaskList(tasks) {
 export async function runNextTask() {
   if (!currentEntryId && !currentJobDoc) {
     setStatus("Select a job first.");
+    logAction({
+      category: "RUN_STAGE",
+      level: "WARN",
+      title: "Run Attempt Cancelled",
+      summary: "No job is currently loaded into active workspace.",
+    });
     return;
   }
 
   setStatus("Synthesizing code patch and evaluating gates...");
   const targetFile = document.getElementById("targetFileInput")?.value || "Joob_Runner.py";
+  const startTime = Date.now();
+
+  logAction({
+    category: "RUN_STAGE",
+    level: "INFO",
+    title: `Starting Stage Evolution (${targetFile})`,
+    summary: `Synthesizing code patch for target '${targetFile}'`,
+    endpoint: "/api/run/stage",
+    method: "POST",
+    requestPayload: {
+      entry_id: currentEntryId,
+      target_file: targetFile,
+      attached_files_count: attachedFilesList.filter((f) => f.isChecked).length,
+    },
+  });
 
   try {
     const res = await fetch("/api/run/stage", {
@@ -331,16 +389,58 @@ export async function runNextTask() {
       }),
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+    const durationMs = Date.now() - startTime;
+
     if (!res.ok || !data.ok) {
-      setStatus("Stage Error: " + (data.error || "Failed"));
+      const errMsg = data.error || "Stage execution failed.";
+      logAction({
+        category: "RUN_STAGE",
+        level: "ERROR",
+        title: "Stage Evolution Failed",
+        summary: errMsg,
+        endpoint: "/api/run/stage",
+        method: "POST",
+        status: res.status,
+        durationMs,
+        errorMessage: errMsg,
+        errorDetails: data.details || JSON.stringify(data, null, 2),
+        responsePayload: data,
+      });
+      setStatus("Stage Error: " + errMsg);
       return;
     }
 
     if (data.all_completed) {
+      logAction({
+        category: "RUN_STAGE",
+        level: "SUCCESS",
+        title: "All Tasks Completed",
+        summary: "All tasks in active job have completed.",
+        endpoint: "/api/run/stage",
+        status: res.status,
+        durationMs,
+        responsePayload: data,
+      });
       setStatus("All tasks in this job completed!");
       return;
     }
+
+    logAction({
+      category: "RUN_STAGE",
+      level: "SUCCESS",
+      title: `Stage Evolution Succeeded (Step ${data.task_order}: ${data.task_name})`,
+      summary: `Synthesized candidate patch (${data.candidate_code?.length || 0} bytes) in ${durationMs}ms for '${data.target_file}'. Diff ready for review.`,
+      endpoint: "/api/run/stage",
+      status: 200,
+      durationMs,
+      responsePayload: {
+        stage_id: data.stage_id,
+        task_order: data.task_order,
+        task_name: data.task_name,
+        target_file: data.target_file,
+      },
+    });
 
     currentStageId = data.stage_id;
     document.getElementById("diffTaskInfo").textContent =
@@ -349,27 +449,67 @@ export async function runNextTask() {
     document.getElementById("diffModal").hidden = false;
     setStatus(`Stage ready for Step ${data.task_order}.`);
   } catch (err) {
+    logAction({
+      category: "RUN_STAGE",
+      level: "ERROR",
+      title: "Stage Evolution Network Error",
+      summary: String(err),
+      endpoint: "/api/run/stage",
+      method: "POST",
+      errorMessage: String(err),
+    });
     setStatus("Error: " + err);
   }
 }
 
 export async function commitDiff() {
   if (!currentStageId) return;
+  const startTime = Date.now();
   try {
     const res = await fetch("/api/run/commit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ stage_id: currentStageId }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+    const durationMs = Date.now() - startTime;
     document.getElementById("diffModal").hidden = true;
+
     if (data.ok) {
+      logAction({
+        category: "COMMIT_DIFF",
+        level: "SUCCESS",
+        title: `Committed Diff Atomically (Step ${data.task_order})`,
+        summary: `Successfully committed candidate patch in ${durationMs}ms.`,
+        endpoint: "/api/run/commit",
+        status: 200,
+        durationMs,
+        responsePayload: data,
+      });
       setStatus(`Committed Step ${data.task_order}.`);
       if (currentEntryId) loadJob(currentEntryId);
     } else {
-      setStatus("Commit Error: " + data.error);
+      const errMsg = data.error || "Commit failed.";
+      logAction({
+        category: "COMMIT_DIFF",
+        level: "ERROR",
+        title: "Commit Diff Failed",
+        summary: errMsg,
+        endpoint: "/api/run/commit",
+        status: res.status,
+        durationMs,
+        errorMessage: errMsg,
+      });
+      setStatus("Commit Error: " + errMsg);
     }
   } catch (err) {
+    logAction({
+      category: "COMMIT_DIFF",
+      level: "ERROR",
+      title: "Commit Diff Network Error",
+      summary: String(err),
+      errorMessage: String(err),
+    });
     setStatus("Commit Failed: " + err);
   }
 }
@@ -381,6 +521,14 @@ export async function discardDiff() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ stage_id: currentStageId }),
+    });
+    logAction({
+      category: "DISCARD_DIFF",
+      level: "WARN",
+      title: "Discarded Candidate Diff",
+      summary: "Discarded candidate code. Working file preserved.",
+      endpoint: "/api/run/discard",
+      method: "POST",
     });
   } catch (_) {}
   document.getElementById("diffModal").hidden = true;
@@ -542,6 +690,171 @@ function escapeHtml(s) {
   return d.innerHTML;
 }
 
+window.copyConsoleLogs = function () {
+  if (consoleLogs.length === 0) {
+    setStatus("No logs to copy.");
+    return;
+  }
+  const lines = [];
+  lines.push("================================================================================");
+  lines.push("JOBMAKER & JOB RUNNER SYSTEM CONSOLE DEBUG REPORT (VANILLA JS MIRROR)");
+  lines.push(`Export Timestamp: ${new Date().toISOString()}`);
+  lines.push(`Total Entries: ${consoleLogs.length}`);
+  lines.push(`Active Job: ${(currentJobDoc && currentJobDoc.Job_Name) || "None"}`);
+  lines.push("Author: Elton Boehnen · boehnenelton2024@gmail.com · github.com/boehnenelton");
+  lines.push("================================================================================\n");
+
+  consoleLogs.forEach((log, index) => {
+    lines.push(`[#${consoleLogs.length - index}] [${log.timestamp}] [${log.level}] [${log.category}]`);
+    lines.push(`TITLE: ${log.title}`);
+    lines.push(`SUMMARY: ${log.summary}`);
+    if (log.endpoint) {
+      lines.push(
+        `HTTP: ${log.method || "POST"} ${log.endpoint} ${log.status ? `[HTTP ${log.status}]` : ""} ${
+          log.durationMs !== undefined ? `(${log.durationMs}ms)` : ""
+        }`
+      );
+    }
+    if (log.errorMessage) lines.push(`ERROR: ${log.errorMessage}`);
+    if (log.errorDetails) lines.push(`ERROR DETAILS:\n${log.errorDetails}`);
+    if (log.requestPayload)
+      lines.push(
+        `REQUEST: ${typeof log.requestPayload === "string" ? log.requestPayload : JSON.stringify(log.requestPayload, null, 2)}`
+      );
+    if (log.responsePayload)
+      lines.push(
+        `RESPONSE: ${typeof log.responsePayload === "string" ? log.responsePayload : JSON.stringify(log.responsePayload, null, 2)}`
+      );
+    lines.push("--------------------------------------------------------------------------------");
+  });
+
+  const fullText = lines.join("\n");
+  navigator.clipboard.writeText(fullText);
+  setStatus(`Copied ${consoleLogs.length} console log entries to clipboard! Ready to send for debugging.`);
+  logAction({
+    category: "SYSTEM",
+    level: "INFO",
+    title: "Logs Exported to Clipboard",
+    summary: `Exported ${consoleLogs.length} action log entries for debugging.`,
+  });
+};
+
+window.clearConsoleLogs = function () {
+  consoleLogs = [];
+  try {
+    localStorage.removeItem("jobmaker_action_console_logs");
+  } catch (_) {}
+  window.renderConsoleLogs();
+  setStatus("Console logs cleared.");
+};
+
+window.copySingleLog = function (id) {
+  const log = consoleLogs.find((l) => l.id === id);
+  if (!log) return;
+  const text = `[${log.timestamp}] [${log.level}] [${log.category}] ${log.title}\nSUMMARY: ${log.summary}\n${
+    log.endpoint ? `HTTP: ${log.method || "POST"} ${log.endpoint} [${log.status || ""}]\n` : ""
+  }${log.errorMessage ? `ERROR: ${log.errorMessage}\n` : ""}${log.errorDetails ? `DETAILS: ${log.errorDetails}\n` : ""}`;
+  navigator.clipboard.writeText(text);
+  setStatus("Copied log entry to clipboard.");
+};
+
+window.renderConsoleLogs = function () {
+  const container = document.getElementById("consoleLogList");
+  if (!container) return;
+
+  const levelFilter = document.getElementById("consoleFilterSelect")?.value || "all";
+  const search = (document.getElementById("consoleSearchInput")?.value || "").toLowerCase().trim();
+
+  const filtered = consoleLogs.filter((log) => {
+    if (levelFilter !== "all" && log.level !== levelFilter) return false;
+    if (search) {
+      const inTitle = (log.title || "").toLowerCase().includes(search);
+      const inSummary = (log.summary || "").toLowerCase().includes(search);
+      const inErr = (log.errorMessage || "").toLowerCase().includes(search);
+      const inEndpoint = (log.endpoint || "").toLowerCase().includes(search);
+      return inTitle || inSummary || inErr || inEndpoint;
+    }
+    return true;
+  });
+
+  const errCount = consoleLogs.filter((l) => l.level === "ERROR").length;
+  const summaryEl = document.getElementById("consoleStatsSummary");
+  if (summaryEl) {
+    summaryEl.textContent = `Total Logs: ${consoleLogs.length} | Errors: ${errCount} (Showing: ${filtered.length})`;
+    summaryEl.style.color = errCount > 0 ? "var(--red)" : "#000000";
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML =
+      '<div style="border:1px solid #000;padding:24px;text-align:center;background:#FFF;">No console entries match filter.</div>';
+    return;
+  }
+
+  container.innerHTML = filtered
+    .map((log) => {
+      const isErr = log.level === "ERROR";
+      const isWarn = log.level === "WARN";
+      const isSuccess = log.level === "SUCCESS";
+      const borderColor = isErr ? "var(--red)" : isWarn ? "#000" : "#CCC";
+      const bgColor = isErr ? "#FFF5F5" : isWarn ? "#FFFDF0" : "#FFF";
+      const levelBg = isErr ? "var(--red)" : isSuccess ? "#000" : isWarn ? "#DE2626" : "#EEE";
+      const levelColor = isErr || isSuccess || isWarn ? "#FFF" : "#000";
+
+      return `
+      <div style="border:1px solid ${borderColor};background:${bgColor};padding:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #DDD;padding-bottom:6px;margin-bottom:6px;gap:6px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="background:${levelBg};color:${levelColor};font-weight:700;padding:2px 6px;font-size:0.65rem;">${log.level}</span>
+            <span style="background:#EEE;color:#333;font-weight:700;padding:2px 6px;font-size:0.65rem;">${log.category}</span>
+            <span style="color:#666;font-size:0.7rem;">${log.timeFormatted}</span>
+            ${
+              log.endpoint
+                ? `<span style="background:#EAEAEA;padding:2px 6px;font-size:0.65rem;font-weight:700;">${log.method || "POST"} ${log.endpoint} ${
+                    log.status ? `[${log.status}]` : ""
+                  }</span>`
+                : ""
+            }
+          </div>
+          <button class="jm-btn" style="padding:2px 8px;font-size:0.65rem;" onclick="window.copySingleLog('${log.id}')">Copy</button>
+        </div>
+        <div style="font-weight:700;font-size:0.8rem;margin-bottom:4px;">${escapeHtml(log.title)}</div>
+        <div style="font-size:0.75rem;color:#333;line-height:1.4;">${escapeHtml(log.summary)}</div>
+        ${
+          log.errorMessage
+            ? `
+          <div style="margin-top:6px;background:#000;color:#FFF;border-left:4px solid var(--red);padding:6px;font-size:0.75rem;">
+            <div style="color:var(--red);font-weight:700;font-size:0.65rem;text-transform:uppercase;">Error:</div>
+            <div>${escapeHtml(log.errorMessage)}</div>
+          </div>
+        `
+            : ""
+        }
+        ${
+          log.errorDetails
+            ? `
+          <details style="margin-top:6px;font-size:0.7rem;">
+            <summary style="cursor:pointer;color:var(--red);font-weight:700;">Inspect Error Details / Stack</summary>
+            <pre style="background:#000;color:#FFF;padding:6px;margin-top:4px;overflow-x:auto;white-space:pre-wrap;">${escapeHtml(log.errorDetails)}</pre>
+          </details>
+        `
+            : ""
+        }
+        ${
+          log.responsePayload
+            ? `
+          <details style="margin-top:6px;font-size:0.7rem;">
+            <summary style="cursor:pointer;color:#444;font-weight:700;">Inspect Response Payload</summary>
+            <pre style="background:#FAFAFA;border:1px solid #DDD;padding:6px;margin-top:4px;overflow-x:auto;">${escapeHtml(JSON.stringify(log.responsePayload, null, 2))}</pre>
+          </details>
+        `
+            : ""
+        }
+      </div>
+    `;
+    })
+    .join("");
+};
+
 // Global hooks for inline event handlers
 window.loadSelectedJob = loadSelectedJob;
 window.runNextTask = runNextTask;
@@ -551,5 +864,6 @@ window.setPanelType = setPanelType;
 window.handleJsSingleFile = handleJsSingleFile;
 window.handleJsFolder = handleJsFolder;
 window.handleJsZip = handleJsZip;
+window.renderConsoleLogs = window.renderConsoleLogs;
 
 document.addEventListener("DOMContentLoaded", initApp);

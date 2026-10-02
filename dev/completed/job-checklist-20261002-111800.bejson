@@ -1,0 +1,87 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Schema_Name": "Job Schema",
+  "Schema_Version": "1.0",
+  "Schema_Description": "Custom job schema for the NewAgent task creation and tracking system, managing individual task states and optional auditing. Each task carries its own task_context (embedded, chunked files), task_reference (path-only refs), and task_mandatory (marks a task as a required, built-in step for the job's Job_Type/Job_Subtype). Job_Type/Job_Subtype classify the job; Contextualize_Plan/Contextualize_Last control what each task is injected with at run time. Also reused unmodified as the Template payload shape.",
+  "Job_Goal": "Implement multi-page website planning pipeline: master template generation first, derived index/feed/feature/about/contact pages, and terminal cross-page navigation hyperlink integrity audit.",
+  "Goal_Rules": "Strict compliance with Tri-Color Palette, zero fluff, Elton Boehnen Core BEJSON immutability, solid numeric versioning 3.1.12 / package 109, and 100% vanilla JS parity in /js.",
+  "Job_Type": "website",
+  "Job_Subtype": "multipage_html",
+  "Contextualize_Plan": true,
+  "Contextualize_Last": true,
+  "Job_Complete": true,
+  "Creation_Date": "2026-10-02",
+  "Completion_Date": "2026-10-02",
+  "Records_Type": [
+    "JobTask"
+  ],
+  "Fields": [
+    { "name": "task_id", "type": "string" },
+    { "name": "task_order", "type": "integer" },
+    { "name": "task_name", "type": "string" },
+    { "name": "task_description", "type": "string" },
+    { "name": "task_completed", "type": "boolean" },
+    { "name": "audit_enabled", "type": "boolean" },
+    { "name": "audit_passed", "type": "boolean" },
+    { "name": "audit_fail_reason", "type": "string" },
+    { "name": "task_context", "type": "array" },
+    { "name": "task_reference", "type": "array" },
+    { "name": "task_mandatory", "type": "boolean" }
+  ],
+  "Values": [
+    [
+      "task-webplan-01",
+      1,
+      "Author Multi-Page Website Blueprint & Navigation Audit Pipeline Template",
+      "Add tmpl-website-multipage to RUNNER_TEMPLATES in lib_bejson_Runner_templates.ts and its vanilla JS mirror lib_bejson_Runner_templates.js with master layout, derived pages (Index, Feed, Features, About, Contact), and terminal nav link audit.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      ["src/lib/lib_bejson_Runner_templates.ts", "src/lib/lib_js/lib_bejson_Runner_templates.js"],
+      true
+    ],
+    [
+      "task-webplan-02",
+      2,
+      "Update Generator Spreadsheet Analogy & Server Sequential Context Feeding",
+      "Enhance buildSpreadsheetAnalogySystemInstruction to train AI on website planning patterns. Update server.ts commit handler to preserve candidate code for website and multipage job types.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      ["src/lib/lib_bejson_Runner_generator.ts", "src/lib/lib_js/lib_bejson_Runner_generator.js", "server.ts"],
+      true
+    ],
+    [
+      "task-webplan-03",
+      3,
+      "Integrate Generator UI Presets across React and Vanilla JS Mirror",
+      "Add quick preset button for 'Multi-Page Website & Nav Link Audit' and update job type/subtype select options in App.tsx and js/index.html.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      ["src/App.tsx", "js/index.html"],
+      true
+    ],
+    [
+      "task-webplan-04",
+      4,
+      "Ledger Maintenance & Version Audit",
+      "Bump project ledger bejson_project.json to v3.1.12 / Package 109, update dev/ui-notes.md, verify compilation and lints.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      ["bejson_project.json", "dev/ui-notes.md"],
+      true
+    ]
+  ]
+}

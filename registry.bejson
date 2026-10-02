@@ -6,13 +6,34 @@
     "JobRegistry"
   ],
   "Fields": [
-    { "name": "entry_id", "type": "string" },
-    { "name": "entry_name", "type": "string" },
-    { "name": "entry_slug", "type": "string" },
-    { "name": "entry_type", "type": "string" },
-    { "name": "file_path", "type": "string" },
-    { "name": "created_date", "type": "string" },
-    { "name": "modified_date", "type": "string" }
+    {
+      "name": "entry_id",
+      "type": "string"
+    },
+    {
+      "name": "entry_name",
+      "type": "string"
+    },
+    {
+      "name": "entry_slug",
+      "type": "string"
+    },
+    {
+      "name": "entry_type",
+      "type": "string"
+    },
+    {
+      "name": "file_path",
+      "type": "string"
+    },
+    {
+      "name": "created_date",
+      "type": "string"
+    },
+    {
+      "name": "modified_date",
+      "type": "string"
+    }
   ],
   "Values": [
     [
@@ -32,6 +53,24 @@
       "jobs/typescript_mirror_job.json",
       "2026-09-27",
       "2026-09-27"
+    ],
+    [
+      "61f5ae40-7847-442f-a5b1-951d3f787152",
+      "Multi-Page Website Blueprint & Navigation Audit Pipeline",
+      "job_multi_page_website_blueprint___navigation_audit_pipeline_muradfoj",
+      "schema",
+      "jobs/job_multi_page_website_blueprint___navigation_audit_pipeline_muradfoj.bejson",
+      "2026-10-02",
+      "2026-10-02"
+    ],
+    [
+      "28aeb021-9d9b-4ac9-ba2a-2839a0aeb06f",
+      "Multi-Page Website Blueprint & Navigation Audit Pipeline",
+      "multi_page_website_blueprint___navigation_audit_pipeline",
+      "schema",
+      "jobs/job_multi_page_website_blueprint___navigation_audit_pipeline_muradfoj.bejson",
+      "2026-10-02",
+      "2026-10-02"
     ]
   ]
 }

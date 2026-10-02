@@ -36,6 +36,7 @@
         <button class="jm-sidebar__btn" data-nav="templates">Templates</button>
         <button class="jm-sidebar__btn" data-nav="generate">Generate Job (AI)</button>
         <button class="jm-sidebar__btn" data-nav="keys">Key Manager</button>
+        <button class="jm-sidebar__btn" data-nav="console">System Console</button>
       </div>
 
       <div style="padding:12px;border-top:1px solid #222;font-size:0.75rem;color:#777;">
@@ -129,6 +130,10 @@
           </p>
 
           <label style="font-size:0.75rem;font-weight:800;text-transform:uppercase;display:block;margin-bottom:4px;">Describe Job Goals &amp; Requirements *</label>
+          <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+            <button type="button" class="jm-btn" style="padding:3px 8px;font-size:0.7rem;" onclick="document.getElementById('genPromptInput').value='Architect and generate a multi-page website plan: first generate the master shell layout & navigation template (header, nav links, footer, responsive CSS), then derive the Index/Landing, Feed/Catalog, Features, About, and Contact pages off the master template, and conclude with an automated Navigation & Cross-Page Hyperlink Integrity Audit verifying 100% route validity and responsive nav across all pages.';document.getElementById('genJobNameInput').value='Multi-Page Website & Nav Link Audit';document.getElementById('genTargetFileInput').value='website/index.html';document.getElementById('genJobTypeSelect').value='website';document.getElementById('genJobSubtypeSelect').value='multipage_html';document.getElementById('genStepCountInput').value='7';">Website &amp; Nav Link Audit</button>
+            <button type="button" class="jm-btn" style="padding:3px 8px;font-size:0.7rem;" onclick="document.getElementById('genPromptInput').value='Refactor Joob_Runner.py to add AST syntax validation gates, atomic diff review, and safe rollback.';document.getElementById('genJobNameInput').value='Python AST Gate';document.getElementById('genTargetFileInput').value='Joob_Runner.py';document.getElementById('genJobTypeSelect').value='refactor';document.getElementById('genJobSubtypeSelect').value='python';document.getElementById('genStepCountInput').value='5';">Python AST Gate</button>
+          </div>
           <textarea id="genPromptInput" rows="4" placeholder="e.g. Refactor Joob_Runner.py to add AST syntax validation gates, atomic diff review, and safe rollback." style="width:100%;padding:8px;font-family:monospace;font-size:0.8rem;border:1px solid #000;margin-bottom:12px;box-sizing:border-box;"></textarea>
 
           <div style="display:grid;grid-template-cols:1fr 1fr;gap:10px;margin-bottom:12px;">
@@ -147,6 +152,7 @@
               <label style="font-size:0.75rem;font-weight:800;text-transform:uppercase;display:block;margin-bottom:4px;">Job Type &amp; Subtype</label>
               <div style="display:flex;gap:4px;">
                 <select id="genJobTypeSelect" style="flex:1;padding:6px;border:1px solid #000;font-size:0.8rem;">
+                  <option value="website">website</option>
                   <option value="feature">feature</option>
                   <option value="refactor">refactor</option>
                   <option value="script">script</option>
@@ -154,6 +160,7 @@
                   <option value="custom">custom</option>
                 </select>
                 <select id="genJobSubtypeSelect" style="flex:1;padding:6px;border:1px solid #000;font-size:0.8rem;">
+                  <option value="multipage_html">multipage_html</option>
                   <option value="typescript">typescript</option>
                   <option value="python">python</option>
                   <option value="react">react</option>
@@ -212,6 +219,35 @@
           <div id="keySlotsContainer"></div>
         </div>
       </section>
+
+      <!-- Console Section -->
+      <section data-section="console" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <h2 style="font-size:1.1rem;font-weight:800;text-transform:uppercase;margin:0;">System Console &amp; Action Log Ledger</h2>
+          <div style="display:flex;gap:8px;">
+            <button class="jm-btn jm-btn--red" id="consoleCopyBtn" onclick="window.copyConsoleLogs()">Copy Full Debug Log</button>
+            <button class="jm-btn" id="consoleClearBtn" onclick="window.clearConsoleLogs()">Clear</button>
+          </div>
+        </div>
+
+        <div style="border:1px solid #000;background:#FFF;padding:12px;margin-bottom:12px;max-width:850px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:0.75rem;flex-wrap:wrap;gap:6px;">
+            <div id="consoleStatsSummary" style="font-weight:700;">Total Logs: 0 | Errors: 0</div>
+            <div style="display:flex;gap:6px;">
+              <select id="consoleFilterSelect" onchange="window.renderConsoleLogs()" style="padding:4px;font-size:0.75rem;border:1px solid #000;">
+                <option value="all">All Levels</option>
+                <option value="ERROR">Errors Only</option>
+                <option value="WARN">Warnings Only</option>
+                <option value="SUCCESS">Success Only</option>
+                <option value="INFO">Info Only</option>
+              </select>
+            </div>
+          </div>
+          <input type="text" id="consoleSearchInput" oninput="window.renderConsoleLogs()" placeholder="Search logs by keyword or error message..." style="width:100%;padding:6px;font-family:monospace;font-size:0.75rem;border:1px solid #000;box-sizing:border-box;">
+        </div>
+
+        <div id="consoleLogList" style="max-width:850px;max-height:550px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;font-family:monospace;font-size:0.75rem;"></div>
+      </section>
     </main>
   </div>
 
@@ -248,7 +284,7 @@
         <div><strong>Email:</strong> boehnenelton2024@gmail.com</div>
         <div><strong>Website:</strong> boehnenelton2024.pages.dev</div>
         <div><strong>GitHub:</strong> github.com/boehnenelton</div>
-        <div><strong>Version:</strong> 3.1.7 (PKG105)</div>
+        <div><strong>Version:</strong> 3.1.12 (PKG109)</div>
       </div>
       <button class="jm-btn jm-btn--red" id="closeAboutBtn">Close</button>
     </div>

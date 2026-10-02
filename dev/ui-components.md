@@ -104,3 +104,31 @@ RELATIONAL_ID: 41ca8192-3847-4921-93bb-27189a04cf28
 
 ## 6. `HubSection`, `JobEditorSection`, `RunnerSection`, `TemplatesSection`, `KeyManagerSection`, `MetaUIModal`
 - Maintain exhaustive specifications as documented in v3.1.6 ledger.
+
+## 7. `SystemConsoleSection` (Console & Action Audit Ledger)
+- **Location**: Navigation sidebar entry `Console` (with real-time error badge indicator) and main content panel when `activeSection === "console"`.
+- **Constituent Slots & Controls**:
+  - `HeaderToolbar`:
+    - `SectionTitle`: Displays Terminal icon and "System Console & Action Audit Ledger".
+    - `CopyAllLogsButton`: Vivid red button executing `handleCopyAllLogs()` to generate structured debug report with system metadata headers and copy to clipboard.
+    - `DownloadLogsButton`: Triggers `handleDownloadLogs()` downloading `.txt` report.
+    - `ClearLogsButton`: Triggers `handleClearLogs()` with `localStorage` reset.
+  - `FilterStatusBar`:
+    - `LevelFilterButtons`: Quick toggles for `All`, `Errors` (highlighted in vivid red if > 0), `Warnings`, `Success`, `Info`.
+    - `CategoryDropdown`: Filters by action domain (`RUN_STAGE`, `COMMIT_DIFF`, `DISCARD_DIFF`, `GENERATE_JOB`, `TEMPLATE`, `DOCUMENT_IO`, `SYSTEM`).
+    - `SearchInput`: Monospace query input filtering by title, summary, endpoint, error message, or details.
+  - `LogRecordCards`:
+    - `LevelBadge`: Vivid red for ERROR, black with red text for WARN, black with white text for SUCCESS, neutral grey for INFO.
+    - `CategoryBadge`: Distinct identifier for functional subsystem.
+    - `Timestamp`: Formatted local time with milliseconds.
+    - `HTTPBadge`: Displays HTTP method, endpoint route, status code, and latency in milliseconds.
+    - `CopySingleLogButton`: Copies individual log entry in formatted diagnostic text.
+    - `InspectPayloadButton`: Toggles accordion expanding `requestPayload`, `responsePayload`, and `errorDetails`.
+    - `ErrorAlertBox`: High-visibility black container with vivid red border and bold error text for rapid triage.
+- **Function & Handler Mapping**:
+  - `logAction(entry)`: Structured logging dispatcher saving up to 300 chronological records into state and `localStorage`.
+  - `handleCopyAllLogs()`: Formats entire console history with system headers, model settings, active job, and copies to clipboard.
+  - `handleDownloadLogs()`: Creates text Blob and initiates download.
+  - `handleClearLogs()`: Empties log queue and removes persistent storage.
+  - `handleToggleExpandLog(id)`: Manages accordion expansion state per card.
+  - `handleCopySingleLog(log)`: Copies individual entry to clipboard.

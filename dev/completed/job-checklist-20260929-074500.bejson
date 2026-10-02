@@ -1,0 +1,87 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Schema_Name": "Job Schema",
+  "Schema_Version": "1.0",
+  "Schema_Description": "Custom job schema for the NewAgent task creation and tracking system, managing individual task states and optional auditing. Each task carries its own task_context (embedded, chunked files), task_reference (path-only refs), and task_mandatory (marks a task as a required, built-in step for the job's Job_Type/Job_Subtype). Job_Type/Job_Subtype classify the job; Contextualize_Plan/Contextualize_Last control what each task is injected with at run time. Also reused unmodified as the Template payload shape.",
+  "Job_Goal": "Diagnose stage evolution failures, integrate Console tab in navigation sidebar with structured action logging, diff tracking, error inspection, copy debug log button, and multi-model fallback degradation across React and Vanilla JS mirror.",
+  "Goal_Rules": "Strict compliance with Tri-Color Palette, zero fluff, Elton Boehnen Core BEJSON immutability, solid numeric versioning 3.1.11 / package 108, and 100% vanilla JS parity in /js.",
+  "Job_Type": "refactor",
+  "Job_Subtype": "typescript",
+  "Contextualize_Plan": true,
+  "Contextualize_Last": true,
+  "Job_Complete": true,
+  "Creation_Date": "2026-09-29",
+  "Completion_Date": "2026-09-29",
+  "Records_Type": [
+    "JobTask"
+  ],
+  "Fields": [
+    { "name": "task_id", "type": "string" },
+    { "name": "task_order", "type": "integer" },
+    { "name": "task_name", "type": "string" },
+    { "name": "task_description", "type": "string" },
+    { "name": "task_completed", "type": "boolean" },
+    { "name": "audit_enabled", "type": "boolean" },
+    { "name": "audit_passed", "type": "boolean" },
+    { "name": "audit_fail_reason", "type": "string" },
+    { "name": "task_context", "type": "array" },
+    { "name": "task_reference", "type": "array" },
+    { "name": "task_mandatory", "type": "boolean" }
+  ],
+  "Values": [
+    [
+      "task-console-01",
+      1,
+      "Diagnose Stage Evolution Failure & Multi-Model Fallback",
+      "Implement cascading model fallback (chosen model -> gemini-3.5-flash-lite -> gemini-3.6-flash -> gemini-2.5-flash) and comprehensive diagnostics reporting in server.ts to handle rate limits and 429 quota exhaustion gracefully.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      ["server.ts"],
+      true
+    ],
+    [
+      "task-console-02",
+      2,
+      "Implement Navigation Sidebar Console Tab in React",
+      "Add Console tab with Terminal icon, dynamic error count badge, full-featured audit ledger view, level filters, keyword search, payload inspection, and Copy Full Debug Log button.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      ["src/App.tsx"],
+      true
+    ],
+    [
+      "task-console-03",
+      3,
+      "Vanilla JavaScript Mirror Parity in /js",
+      "Implement identical Console section, action logging buffer, window.copyConsoleLogs, window.clearConsoleLogs, window.renderConsoleLogs, and window.copySingleLog in /js/index.html and /js/app.js.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      ["js/index.html", "js/app.js"],
+      true
+    ],
+    [
+      "task-console-04",
+      4,
+      "Audit Ledgers & Version Bump",
+      "Synchronize project ledger bejson_project.json to v3.1.11 / Package 108, update dev/ui-components.md and dev/ui-notes.md, verify compilation and lints.",
+      true,
+      true,
+      true,
+      "",
+      [],
+      ["bejson_project.json", "dev/ui-components.md", "dev/ui-notes.md"],
+      true
+    ]
+  ]
+}

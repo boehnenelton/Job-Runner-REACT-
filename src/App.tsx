@@ -42,6 +42,7 @@ import {
   BookOpen,
   Sparkles,
   HelpCircle,
+  Terminal,
 } from "lucide-react";
 
 import {
@@ -80,8 +81,26 @@ import {
   KeySlotItem,
 } from "./lib/lib_bejson_Runner_keys";
 
-type MainSection = "hub" | "editor" | "runner" | "templates" | "keys" | "attachments" | "generate";
+type MainSection = "hub" | "editor" | "runner" | "templates" | "keys" | "attachments" | "generate" | "console";
 type ProcessingState = "No keys loaded" | "Idle" | "Sending..." | "Awaiting response..." | "Error";
+
+export interface ConsoleLogEntry {
+  id: string;
+  timestamp: string;
+  timeFormatted: string;
+  category: "RUN_STAGE" | "COMMIT_DIFF" | "DISCARD_DIFF" | "GENERATE_JOB" | "TEMPLATE" | "KEY_STORE" | "FILE_ATTACHMENT" | "REGISTRY" | "DOCUMENT_IO" | "SYSTEM";
+  level: "INFO" | "SUCCESS" | "WARN" | "ERROR";
+  title: string;
+  summary: string;
+  endpoint?: string;
+  method?: string;
+  status?: number;
+  durationMs?: number;
+  requestPayload?: any;
+  responsePayload?: any;
+  errorMessage?: string;
+  errorDetails?: string;
+}
 
 interface RegistryEntry {
   entry_id: string;
@@ -176,6 +195,190 @@ export default function App() {
   const [genError, setGenError] = useState<string | null>(null);
   const [genSuccessMessage, setGenSuccessMessage] = useState<string | null>(null);
   const [genSubTab, setGenSubTab] = useState<"create" | "preview" | "diagnostics" | "analogy">("create");
+
+  // Action Console Logs State
+  const [consoleLogs, setConsoleLogs] = useState<ConsoleLogEntry[]>(() => {
+    try {
+      const saved = localStorage.getItem("jobmaker_action_console_logs");
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return [
+      {
+        id: "init-log",
+        timestamp: new Date().toISOString(),
+        timeFormatted: new Date().toLocaleTimeString(),
+        category: "SYSTEM",
+        level: "INFO",
+        title: "System Console Ready",
+        summary: "Autonomous action logger tracking all stage evolutions, diff reviews, mutations, and backend API interactions.",
+        requestPayload: { version: "3.1.11", platform: "Full-Stack TypeScript" },
+      },
+    ];
+  });
+  const [consoleFilterLevel, setConsoleFilterLevel] = useState<"all" | "ERROR" | "WARN" | "SUCCESS" | "INFO">("all");
+  const [consoleFilterCategory, setConsoleFilterCategory] = useState<string>("all");
+  const [consoleSearchQuery, setConsoleSearchQuery] = useState<string>("");
+  const [expandedLogIds, setExpandedLogIds] = useState<Record<string, boolean>>({});
+
+  function logAction(entry: Omit<ConsoleLogEntry, "id" | "timestamp" | "timeFormatted">) {
+    const now = new Date();
+    const newEntry: ConsoleLogEntry = {
+      ...entry,
+      id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      timestamp: now.toISOString(),
+      timeFormatted: now.toLocaleTimeString() + "." + String(now.getMilliseconds()).padStart(3, "0"),
+    };
+    setConsoleLogs((prev) => {
+      const updated = [newEntry, ...prev].slice(0, 300);
+      try {
+        localStorage.setItem("jobmaker_action_console_logs", JSON.stringify(updated));
+      } catch {
+        // quota
+      }
+      return updated;
+    });
+  }
+
+  function handleCopyAllLogs() {
+    if (consoleLogs.length === 0) {
+      setSuccessBanner("No logs to copy.");
+      return;
+    }
+    const lines: string[] = [];
+    lines.push("================================================================================");
+    lines.push("JOBMAKER & JOB RUNNER SYSTEM CONSOLE DEBUG REPORT");
+    lines.push(`Export Timestamp: ${new Date().toISOString()}`);
+    lines.push(`Total Entries: ${consoleLogs.length}`);
+    lines.push(`Active Job: ${(activeJobDoc as any)?.Job_Name || "None"} | Target: ${targetFileInput}`);
+    lines.push(`Selected Model: ${selectedModel} | Processing State: ${processingState}`);
+    lines.push("Author: Elton Boehnen · boehnenelton2024@gmail.com · github.com/boehnenelton");
+    lines.push("================================================================================\n");
+
+    consoleLogs.forEach((log, index) => {
+      lines.push(`[#${consoleLogs.length - index}] [${log.timestamp}] [${log.level}] [${log.category}]`);
+      lines.push(`TITLE: ${log.title}`);
+      lines.push(`SUMMARY: ${log.summary}`);
+      if (log.endpoint) {
+        lines.push(`HTTP: ${log.method || "GET"} ${log.endpoint} ${log.status ? `[HTTP ${log.status}]` : ""} ${log.durationMs !== undefined ? `(${log.durationMs}ms)` : ""}`);
+      }
+      if (log.errorMessage) {
+        lines.push(`ERROR: ${log.errorMessage}`);
+      }
+      if (log.errorDetails) {
+        lines.push(`ERROR DETAILS:\n${log.errorDetails}`);
+      }
+      if (log.requestPayload) {
+        lines.push(`REQUEST PAYLOAD:\n${typeof log.requestPayload === "string" ? log.requestPayload : JSON.stringify(log.requestPayload, null, 2)}`);
+      }
+      if (log.responsePayload) {
+        lines.push(`RESPONSE PAYLOAD:\n${typeof log.responsePayload === "string" ? log.responsePayload : JSON.stringify(log.responsePayload, null, 2)}`);
+      }
+      lines.push("--------------------------------------------------------------------------------");
+    });
+
+    const fullText = lines.join("\n");
+    navigator.clipboard.writeText(fullText);
+    setSuccessBanner(`Copied ${consoleLogs.length} console log entries to clipboard! Ready to send for debugging.`);
+    logAction({
+      category: "SYSTEM",
+      level: "INFO",
+      title: "Logs Exported to Clipboard",
+      summary: `Exported ${consoleLogs.length} action log entries for debugging.`,
+    });
+  }
+
+  function handleDownloadLogs() {
+    if (consoleLogs.length === 0) return;
+    const lines: string[] = [];
+    lines.push("================================================================================");
+    lines.push("JOBMAKER & JOB RUNNER SYSTEM CONSOLE DEBUG REPORT");
+    lines.push(`Export Timestamp: ${new Date().toISOString()}`);
+    lines.push(`Total Entries: ${consoleLogs.length}`);
+    lines.push(`Active Job: ${(activeJobDoc as any)?.Job_Name || "None"} | Target: ${targetFileInput}`);
+    lines.push(`Selected Model: ${selectedModel} | Processing State: ${processingState}`);
+    lines.push("Author: Elton Boehnen · boehnenelton2024@gmail.com · github.com/boehnenelton");
+    lines.push("================================================================================\n");
+
+    consoleLogs.forEach((log, index) => {
+      lines.push(`[#${consoleLogs.length - index}] [${log.timestamp}] [${log.level}] [${log.category}]`);
+      lines.push(`TITLE: ${log.title}`);
+      lines.push(`SUMMARY: ${log.summary}`);
+      if (log.endpoint) {
+        lines.push(`HTTP: ${log.method || "GET"} ${log.endpoint} ${log.status ? `[HTTP ${log.status}]` : ""} ${log.durationMs !== undefined ? `(${log.durationMs}ms)` : ""}`);
+      }
+      if (log.errorMessage) lines.push(`ERROR: ${log.errorMessage}`);
+      if (log.errorDetails) lines.push(`ERROR DETAILS:\n${log.errorDetails}`);
+      if (log.requestPayload) lines.push(`REQUEST: ${typeof log.requestPayload === "string" ? log.requestPayload : JSON.stringify(log.requestPayload, null, 2)}`);
+      if (log.responsePayload) lines.push(`RESPONSE: ${typeof log.responsePayload === "string" ? log.responsePayload : JSON.stringify(log.responsePayload, null, 2)}`);
+      lines.push("--------------------------------------------------------------------------------");
+    });
+
+    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `jobmaker-console-debug-${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleClearLogs() {
+    setConsoleLogs([]);
+    try {
+      localStorage.removeItem("jobmaker_action_console_logs");
+    } catch {}
+    setSuccessBanner("Console logs cleared.");
+  }
+
+  function handleToggleExpandLog(id: string) {
+    setExpandedLogIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
+
+  function handleCopySingleLog(log: ConsoleLogEntry) {
+    const text = `[${log.timestamp}] [${log.level}] [${log.category}] ${log.title}\nSUMMARY: ${log.summary}\n${log.endpoint ? `HTTP: ${log.method || "POST"} ${log.endpoint} [${log.status || ""}] (${log.durationMs || 0}ms)\n` : ""}${log.errorMessage ? `ERROR: ${log.errorMessage}\n` : ""}${log.errorDetails ? `DETAILS: ${log.errorDetails}\n` : ""}${log.requestPayload ? `REQUEST: ${JSON.stringify(log.requestPayload, null, 2)}\n` : ""}${log.responsePayload ? `RESPONSE: ${JSON.stringify(log.responsePayload, null, 2)}\n` : ""}`;
+    navigator.clipboard.writeText(text);
+    setSuccessBanner("Log entry copied to clipboard.");
+  }
+
+  const errorLogsCount = useMemo(
+    () => consoleLogs.filter((l) => l.level === "ERROR").length,
+    [consoleLogs]
+  );
+  const warnLogsCount = useMemo(
+    () => consoleLogs.filter((l) => l.level === "WARN").length,
+    [consoleLogs]
+  );
+  const successLogsCount = useMemo(
+    () => consoleLogs.filter((l) => l.level === "SUCCESS").length,
+    [consoleLogs]
+  );
+  const infoLogsCount = useMemo(
+    () => consoleLogs.filter((l) => l.level === "INFO").length,
+    [consoleLogs]
+  );
+
+  const filteredConsoleLogs = useMemo(() => {
+    return consoleLogs.filter((log) => {
+      if (consoleFilterLevel !== "all" && log.level !== consoleFilterLevel) {
+        return false;
+      }
+      if (consoleFilterCategory !== "all" && log.category !== consoleFilterCategory) {
+        return false;
+      }
+      if (consoleSearchQuery.trim()) {
+        const q = consoleSearchQuery.toLowerCase();
+        const inTitle = log.title.toLowerCase().includes(q);
+        const inSummary = log.summary.toLowerCase().includes(q);
+        const inErr = (log.errorMessage || "").toLowerCase().includes(q);
+        const inDetails = (log.errorDetails || "").toLowerCase().includes(q);
+        const inEndpoint = (log.endpoint || "").toLowerCase().includes(q);
+        return inTitle || inSummary || inErr || inDetails || inEndpoint;
+      }
+      return true;
+    });
+  }, [consoleLogs, consoleFilterLevel, consoleFilterCategory, consoleSearchQuery]);
 
   // Save key store doc to localStorage on changes
   useEffect(() => {
@@ -444,6 +647,12 @@ export default function App() {
   async function handleRunNextTask() {
     if (!activeJobDoc && !selectedEntryId) {
       setErrorMessage("No job currently loaded. Please select a job from the Hub first.");
+      logAction({
+        category: "RUN_STAGE",
+        level: "WARN",
+        title: "Run Attempt Cancelled",
+        summary: "No job is currently loaded into active workspace.",
+      });
       return;
     }
 
@@ -460,6 +669,27 @@ export default function App() {
       setKeyStoreDoc(rrResult.updatedDoc);
     }
 
+    const startTime = Date.now();
+    const pendingTask = activeJobTasks.find((t) => !t.taskCompleted) || activeJobTasks[0];
+
+    logAction({
+      category: "RUN_STAGE",
+      level: "INFO",
+      title: `Starting Stage Evolution (Task ${pendingTask?.taskOrder || 1}: ${pendingTask?.taskName || "Next Step"})`,
+      summary: `Synthesizing code patch for target '${targetFileInput}' using model '${selectedModel}'`,
+      endpoint: "/api/run/stage",
+      method: "POST",
+      requestPayload: {
+        entry_id: selectedEntryId,
+        job_name: (activeJobDoc as any)?.Job_Name,
+        target_file: targetFileInput,
+        model: selectedModel,
+        has_custom_prompt: Boolean(customTurnInstruction),
+        attached_files_count: attachedFiles.filter((f) => f.isChecked).length,
+        has_client_api_key: Boolean(clientApiKey),
+      },
+    });
+
     try {
       setProcessingState("Awaiting response...");
       const res = await fetch("/api/run/stage", {
@@ -470,23 +700,74 @@ export default function App() {
           job_doc: activeJobDoc,
           target_file: targetFileInput,
           custom_prompt: customTurnInstruction,
-          api_key: clientApiKey,
+          api_key: clientApiKey || undefined,
           model: selectedModel,
           attached_files: attachedFiles, // Passes both context and work attachments!
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      const durationMs = Date.now() - startTime;
+
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Execution stage failed.");
+        const errorMsg = data.error || `Execution stage failed (HTTP ${res.status}).`;
+        logAction({
+          category: "RUN_STAGE",
+          level: "ERROR",
+          title: `Stage Evolution Failed (Task ${pendingTask?.taskOrder || "?"}: ${pendingTask?.taskName || "Next Step"})`,
+          summary: errorMsg,
+          endpoint: "/api/run/stage",
+          method: "POST",
+          status: res.status,
+          durationMs,
+          errorMessage: errorMsg,
+          errorDetails: data.details || JSON.stringify(data, null, 2),
+          requestPayload: {
+            entry_id: selectedEntryId,
+            job_name: (activeJobDoc as any)?.Job_Name,
+            target_file: targetFileInput,
+            model: selectedModel,
+          },
+          responsePayload: data,
+        });
+        throw new Error(errorMsg);
       }
 
       if (data.all_completed) {
+        logAction({
+          category: "RUN_STAGE",
+          level: "SUCCESS",
+          title: "All Tasks Completed",
+          summary: "All tasks in active job are completed.",
+          endpoint: "/api/run/stage",
+          method: "POST",
+          status: res.status,
+          durationMs,
+          responsePayload: data,
+        });
         setProcessingState("Idle");
         setStatusMessage("All tasks in this job are completed! 🎉");
         setSuccessBanner("All tasks completed.");
         return;
       }
+
+      logAction({
+        category: "RUN_STAGE",
+        level: "SUCCESS",
+        title: `Stage Evolution Succeeded (Task ${data.task_order}: ${data.task_name})`,
+        summary: `Synthesized candidate patch (${data.candidate_code?.length || 0} bytes) in ${durationMs}ms for '${data.target_file}'. Diff ready for review.`,
+        endpoint: "/api/run/stage",
+        method: "POST",
+        status: 200,
+        durationMs,
+        responsePayload: {
+          stage_id: data.stage_id,
+          task_order: data.task_order,
+          task_name: data.task_name,
+          target_file: data.target_file,
+          candidate_length: data.candidate_code?.length || 0,
+        },
+      });
 
       setStagedEvolution({
         stageId: data.stage_id,
@@ -516,6 +797,7 @@ export default function App() {
     setProcessingState("Sending...");
     setStatusMessage("Applying atomic swap and committing task...");
 
+    const startTime = Date.now();
     try {
       const res = await fetch("/api/run/commit", {
         method: "POST",
@@ -523,10 +805,38 @@ export default function App() {
         body: JSON.stringify({ stage_id: stagedEvolution.stageId }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      const durationMs = Date.now() - startTime;
+
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Commit failed.");
+        const errorMsg = data.error || "Commit failed.";
+        logAction({
+          category: "COMMIT_DIFF",
+          level: "ERROR",
+          title: `Commit Diff Failed (Step ${stagedEvolution.taskOrder})`,
+          summary: errorMsg,
+          endpoint: "/api/run/commit",
+          method: "POST",
+          status: res.status,
+          durationMs,
+          errorMessage: errorMsg,
+          requestPayload: { stage_id: stagedEvolution.stageId },
+          responsePayload: data,
+        });
+        throw new Error(errorMsg);
       }
+
+      logAction({
+        category: "COMMIT_DIFF",
+        level: "SUCCESS",
+        title: `Committed Diff Atomically (Step ${data.task_order})`,
+        summary: `Successfully committed candidate patch to '${stagedEvolution.targetFile}' in ${durationMs}ms.`,
+        endpoint: "/api/run/commit",
+        method: "POST",
+        status: 200,
+        durationMs,
+        responsePayload: data,
+      });
 
       setIsDiffModalOpen(false);
       setStagedEvolution(null);
@@ -551,6 +861,14 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stage_id: stagedEvolution.stageId }),
       });
+      logAction({
+        category: "DISCARD_DIFF",
+        level: "WARN",
+        title: `Discarded Candidate Diff (Step ${stagedEvolution.taskOrder})`,
+        summary: `Discarded candidate code for '${stagedEvolution.targetFile}'. Working file preserved.`,
+        endpoint: "/api/run/discard",
+        method: "POST",
+      });
     } catch {
       // non-fatal
     }
@@ -564,6 +882,7 @@ export default function App() {
     setStatusMessage(`Instantiating template: ${tmpl.templateName}...`);
     setErrorMessage(null);
 
+    const startTime = Date.now();
     try {
       const res = await fetch("/api/templates/instantiate", {
         method: "POST",
@@ -576,10 +895,36 @@ export default function App() {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      const durationMs = Date.now() - startTime;
+
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Failed to create job from template.");
+        const errorMsg = data.error || "Failed to create job from template.";
+        logAction({
+          category: "TEMPLATE",
+          level: "ERROR",
+          title: `Template Instantiation Failed (${tmpl.templateName})`,
+          summary: errorMsg,
+          endpoint: "/api/templates/instantiate",
+          method: "POST",
+          status: res.status,
+          durationMs,
+          errorMessage: errorMsg,
+        });
+        throw new Error(errorMsg);
       }
+
+      logAction({
+        category: "TEMPLATE",
+        level: "SUCCESS",
+        title: `Template Instantiated (${tmpl.templateName})`,
+        summary: `Created job entry '${data.entry_id}' from template in ${durationMs}ms.`,
+        endpoint: "/api/templates/instantiate",
+        method: "POST",
+        status: 200,
+        durationMs,
+        responsePayload: { entry_id: data.entry_id, job_name: tmpl.templateName },
+      });
 
       await fetchRegistry();
       setSelectedEntryId(data.entry_id);
@@ -599,6 +944,7 @@ export default function App() {
     setStatusMessage("Saving job document to disk...");
     setErrorMessage(null);
 
+    const startTime = Date.now();
     try {
       const res = await fetch("/api/jobs/save", {
         method: "POST",
@@ -609,10 +955,35 @@ export default function App() {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      const durationMs = Date.now() - startTime;
+
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Failed to save job.");
+        const errorMsg = data.error || "Failed to save job.";
+        logAction({
+          category: "DOCUMENT_IO",
+          level: "ERROR",
+          title: `Save Job Document Failed (${selectedEntryId})`,
+          summary: errorMsg,
+          endpoint: "/api/jobs/save",
+          method: "POST",
+          status: res.status,
+          durationMs,
+          errorMessage: errorMsg,
+        });
+        throw new Error(errorMsg);
       }
+
+      logAction({
+        category: "DOCUMENT_IO",
+        level: "SUCCESS",
+        title: `Saved Job Document (${(activeJobDoc as any)?.Job_Name || selectedEntryId})`,
+        summary: `Serialized and saved job document to disk in ${durationMs}ms.`,
+        endpoint: "/api/jobs/save",
+        method: "POST",
+        status: 200,
+        durationMs,
+      });
 
       setProcessingState("Idle");
       setSuccessBanner("Job document saved successfully.");
@@ -681,6 +1052,26 @@ export default function App() {
     setStatusMessage("Synthesizing BEJSON 104a Job document using spreadsheet analogies...");
 
     const activeKey = getNextRoundRobinKey(keyStoreDoc);
+    const resolvedKey = activeKey ? activeKey.key : undefined;
+    const startTime = Date.now();
+
+    logAction({
+      category: "GENERATE_JOB",
+      level: "INFO",
+      title: "Starting AI Job Document Generation",
+      summary: `Synthesizing BEJSON 104a job with ${genStepCount} steps using model '${genModel || selectedModel}'`,
+      endpoint: "/api/jobs/generate",
+      method: "POST",
+      requestPayload: {
+        job_name: genJobName,
+        target_file: genTargetFile,
+        job_type: genJobType,
+        job_subtype: genJobSubtype,
+        step_count: genStepCount,
+        model: genModel || selectedModel,
+        prompt_snippet: genPrompt.slice(0, 150),
+      },
+    });
 
     try {
       const res = await fetch("/api/jobs/generate", {
@@ -693,17 +1084,31 @@ export default function App() {
           job_type: genJobType,
           job_subtype: genJobSubtype,
           step_count: Number(genStepCount) || 5,
-          api_key: activeKey || undefined,
+          api_key: resolvedKey,
           model: genModel || selectedModel || DEFAULT_MODEL,
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      const durationMs = Date.now() - startTime;
       setGenAttempts(data.attempts_count || 1);
       setGenDiagnostics(data.diagnostics || []);
 
       if (!res.ok || !data.ok) {
         const errText = data.error || "Job generation failed validation.";
+        logAction({
+          category: "GENERATE_JOB",
+          level: "ERROR",
+          title: "AI Job Generation Failed",
+          summary: errText,
+          endpoint: "/api/jobs/generate",
+          method: "POST",
+          status: res.status,
+          durationMs,
+          errorMessage: errText,
+          errorDetails: (data.diagnostics || []).join("\n\n"),
+          responsePayload: data,
+        });
         setGenError(errText);
         setErrorMessage(errText);
         setProcessingState("Error");
@@ -711,6 +1116,23 @@ export default function App() {
         setGenSubTab("diagnostics");
         return;
       }
+
+      logAction({
+        category: "GENERATE_JOB",
+        level: "SUCCESS",
+        title: `AI Job Document Generated (${data.job_doc?.Values?.length || 0} tasks)`,
+        summary: `Synthesized & validated BEJSON 104a document in ${data.attempts_count} attempt(s) (${durationMs}ms).`,
+        endpoint: "/api/jobs/generate",
+        method: "POST",
+        status: 200,
+        durationMs,
+        responsePayload: {
+          job_name: data.job_doc?.Job_Name,
+          target_file: data.job_doc?.Target_File,
+          task_count: data.job_doc?.Values?.length || 0,
+          attempts: data.attempts_count,
+        },
+      });
 
       setGeneratedJobDoc(data.job_doc);
       setGeneratedEntryId(data.entry_id || null);
@@ -722,6 +1144,15 @@ export default function App() {
       setGenSubTab("preview");
       await fetchRegistry();
     } catch (err: any) {
+      logAction({
+        category: "GENERATE_JOB",
+        level: "ERROR",
+        title: "AI Job Generation Network Error",
+        summary: err.message,
+        endpoint: "/api/jobs/generate",
+        method: "POST",
+        errorMessage: err.message,
+      });
       setGenError(err.message);
       setErrorMessage(`Generation error: ${err.message}`);
       setProcessingState("Error");
@@ -852,7 +1283,7 @@ export default function App() {
           <div className="flex items-center gap-2">
             <span className="font-bold tracking-tight text-sm uppercase">JobMaker</span>
             <span className="bg-[#DE2626] text-[#FFFFFF] text-xs font-mono font-bold px-1.5 py-0.5 rounded-none">
-              v3.1.7 (317)
+              v3.1.12 (3112)
             </span>
           </div>
 
@@ -1155,6 +1586,32 @@ export default function App() {
             >
               <Key size={16} />
               <span>Key Manager</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveSection("console");
+                setIsMobileMenuOpen(false);
+              }}
+              className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-none text-left cursor-pointer transition-colors ${
+                activeSection === "console"
+                  ? "bg-[#DE2626] text-[#FFFFFF]"
+                  : "text-[#CCCCCC] hover:bg-[#1A1A1A] hover:text-[#FFFFFF]"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Terminal size={16} />
+                <span>Console</span>
+              </div>
+              {errorLogsCount > 0 ? (
+                <span className="text-[10px] font-mono px-1.5 py-0.2 bg-[#DE2626] text-[#FFFFFF] font-bold">
+                  {errorLogsCount} ERR
+                </span>
+              ) : consoleLogs.length > 0 ? (
+                <span className="text-[10px] font-mono px-1.5 py-0.2 bg-[#222222] text-[#AAAAAA]">
+                  {consoleLogs.length}
+                </span>
+              ) : null}
             </button>
 
             <div className="pt-3">
@@ -2385,6 +2842,20 @@ export default function App() {
                         >
                           Express Full-Stack API
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setGenPrompt("Architect and generate a multi-page website plan: first generate the master shell layout & navigation template (header, nav links, footer, responsive CSS), then derive the Index/Landing, Feed/Catalog, Features, About, and Contact pages off the master template, and conclude with an automated Navigation & Cross-Page Hyperlink Integrity Audit verifying 100% route validity and responsive nav across all pages.");
+                            setGenJobName("Multi-Page Website & Nav Link Audit");
+                            setGenTargetFile("website/index.html");
+                            setGenJobType("website");
+                            setGenJobSubtype("multipage_html");
+                            setGenStepCount(7);
+                          }}
+                          className="text-[11px] border border-[#DE2626] hover:bg-[#DE2626] hover:text-[#FFFFFF] px-2 py-1 bg-[#FAFAFA] text-[#DE2626] font-bold transition-colors cursor-pointer"
+                        >
+                          Multi-Page Website &amp; Nav Audit
+                        </button>
                       </div>
                     </div>
 
@@ -2425,6 +2896,7 @@ export default function App() {
                             onChange={(e) => setGenJobType(e.target.value)}
                             className="flex-1 p-2 text-xs border border-[#000000] bg-[#FFFFFF] text-[#000000] rounded-none focus:outline-none"
                           >
+                            <option value="website">website</option>
                             <option value="feature">feature</option>
                             <option value="refactor">refactor</option>
                             <option value="script">script</option>
@@ -2438,6 +2910,7 @@ export default function App() {
                             onChange={(e) => setGenJobSubtype(e.target.value)}
                             className="flex-1 p-2 text-xs border border-[#000000] bg-[#FFFFFF] text-[#000000] rounded-none focus:outline-none"
                           >
+                            <option value="multipage_html">multipage_html</option>
                             <option value="typescript">typescript</option>
                             <option value="python">python</option>
                             <option value="react">react</option>
@@ -2792,6 +3265,301 @@ export default function App() {
               )}
             </div>
           )}
+
+          {/* 7. SYSTEM CONSOLE & ACTION AUDIT LEDGER */}
+          {activeSection === "console" && (
+            <div className="flex-1 flex flex-col overflow-hidden bg-[#FFFFFF]">
+              {/* Top Sub-Navigation / Action Toolbar */}
+              <div className="border-b border-[#000000] bg-[#FFFFFF] px-4 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-2">
+                  <Terminal size={18} className="text-[#DE2626]" />
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-[#000000]">
+                    System Console &amp; Action Audit Ledger
+                  </h2>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={handleCopyAllLogs}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-[#DE2626] hover:bg-[#000000] text-[#FFFFFF] hover:border hover:border-[#DE2626] px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                    title="Copy full debug report to clipboard to send for debugging"
+                  >
+                    <Copy size={13} />
+                    <span>Copy Full Debug Log</span>
+                  </button>
+
+                  <button
+                    onClick={handleDownloadLogs}
+                    disabled={consoleLogs.length === 0}
+                    className="flex items-center gap-1.5 border border-[#000000] hover:bg-[#000000] hover:text-[#FFFFFF] text-[#000000] px-3 py-1.5 text-xs font-bold uppercase transition-colors cursor-pointer disabled:opacity-50"
+                    title="Download debug log as a text file"
+                  >
+                    <Download size={13} />
+                    <span className="hidden md:inline">Download (.txt)</span>
+                  </button>
+
+                  <button
+                    onClick={handleClearLogs}
+                    disabled={consoleLogs.length === 0}
+                    className="flex items-center gap-1.5 border border-[#000000] hover:bg-[#DE2626] hover:text-[#FFFFFF] hover:border-[#DE2626] text-[#000000] px-2.5 py-1.5 text-xs font-bold uppercase transition-colors cursor-pointer disabled:opacity-50"
+                    title="Clear current console history"
+                  >
+                    <Trash2 size={13} />
+                    <span className="hidden md:inline">Clear</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Status & Filter Bar */}
+              <div className="border-b border-[#000000] bg-[#FAFAFA] p-3 space-y-2 shrink-0">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-bold text-[11px] text-[#666666] uppercase mr-1">Filter Level:</span>
+                    <button
+                      onClick={() => setConsoleFilterLevel("all")}
+                      className={`px-2 py-0.5 text-xs font-bold transition-colors cursor-pointer ${
+                        consoleFilterLevel === "all"
+                          ? "bg-[#000000] text-[#FFFFFF]"
+                          : "bg-[#FFFFFF] border border-[#CCCCCC] text-[#333333] hover:border-[#000000]"
+                      }`}
+                    >
+                      All ({consoleLogs.length})
+                    </button>
+                    <button
+                      onClick={() => setConsoleFilterLevel("ERROR")}
+                      className={`px-2 py-0.5 text-xs font-bold transition-colors cursor-pointer ${
+                        consoleFilterLevel === "ERROR"
+                          ? "bg-[#DE2626] text-[#FFFFFF]"
+                          : errorLogsCount > 0
+                          ? "bg-[#FFFFFF] border border-[#DE2626] text-[#DE2626] hover:bg-[#DE2626] hover:text-[#FFFFFF]"
+                          : "bg-[#FFFFFF] border border-[#CCCCCC] text-[#888888]"
+                      }`}
+                    >
+                      Errors ({errorLogsCount})
+                    </button>
+                    <button
+                      onClick={() => setConsoleFilterLevel("WARN")}
+                      className={`px-2 py-0.5 text-xs font-bold transition-colors cursor-pointer ${
+                        consoleFilterLevel === "WARN"
+                          ? "bg-[#000000] text-[#FFFFFF]"
+                          : "bg-[#FFFFFF] border border-[#CCCCCC] text-[#333333] hover:border-[#000000]"
+                      }`}
+                    >
+                      Warnings ({warnLogsCount})
+                    </button>
+                    <button
+                      onClick={() => setConsoleFilterLevel("SUCCESS")}
+                      className={`px-2 py-0.5 text-xs font-bold transition-colors cursor-pointer ${
+                        consoleFilterLevel === "SUCCESS"
+                          ? "bg-[#000000] text-[#FFFFFF]"
+                          : "bg-[#FFFFFF] border border-[#CCCCCC] text-[#333333] hover:border-[#000000]"
+                      }`}
+                    >
+                      Success ({successLogsCount})
+                    </button>
+                    <button
+                      onClick={() => setConsoleFilterLevel("INFO")}
+                      className={`px-2 py-0.5 text-xs font-bold transition-colors cursor-pointer ${
+                        consoleFilterLevel === "INFO"
+                          ? "bg-[#000000] text-[#FFFFFF]"
+                          : "bg-[#FFFFFF] border border-[#CCCCCC] text-[#333333] hover:border-[#000000]"
+                      }`}
+                    >
+                      Info ({infoLogsCount})
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-[11px] text-[#666666] uppercase">Category:</span>
+                    <select
+                      value={consoleFilterCategory}
+                      onChange={(e) => setConsoleFilterCategory(e.target.value)}
+                      className="text-xs p-1 border border-[#000000] bg-[#FFFFFF] text-[#000000] rounded-none focus:outline-none"
+                    >
+                      <option value="all">All Categories</option>
+                      <option value="RUN_STAGE">Stage Evolution (/api/run/stage)</option>
+                      <option value="COMMIT_DIFF">Commit Diff (/api/run/commit)</option>
+                      <option value="DISCARD_DIFF">Discard Diff</option>
+                      <option value="GENERATE_JOB">Generate Job (/api/jobs/generate)</option>
+                      <option value="TEMPLATE">Template Engine</option>
+                      <option value="DOCUMENT_IO">Job Document IO</option>
+                      <option value="SYSTEM">System &amp; Workspace</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={consoleSearchQuery}
+                    onChange={(e) => setConsoleSearchQuery(e.target.value)}
+                    placeholder="Search logs by keyword, endpoint, error text, or task name..."
+                    className="w-full text-xs p-1.5 border border-[#000000] bg-[#FFFFFF] text-[#000000] font-mono rounded-none focus:outline-none"
+                  />
+                  {consoleSearchQuery && (
+                    <button
+                      onClick={() => setConsoleSearchQuery("")}
+                      className="text-xs text-[#666666] hover:text-[#DE2626] font-bold px-1 cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Log Records Stream */}
+              <div className="flex-1 p-4 overflow-y-auto space-y-3 font-mono text-xs">
+                {filteredConsoleLogs.length === 0 ? (
+                  <div className="border border-[#000000] p-8 text-center bg-[#FFFFFF]">
+                    <Terminal size={32} className="mx-auto text-[#888888] mb-2" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#000000]">
+                      No Console Entries Match Filter
+                    </h3>
+                    <p className="text-xs text-[#666666] mt-1">
+                      {consoleLogs.length === 0
+                        ? "Operations, mutations, stage evolutions, and network requests will appear here automatically."
+                        : "Try adjusting your search query or level filters."}
+                    </p>
+                  </div>
+                ) : (
+                  filteredConsoleLogs.map((log) => {
+                    const isExpanded = Boolean(expandedLogIds[log.id]);
+                    const isError = log.level === "ERROR";
+                    return (
+                      <div
+                        key={log.id}
+                        className={`border p-3 transition-colors ${
+                          isError
+                            ? "border-[#DE2626] bg-[#FFF5F5]"
+                            : log.level === "WARN"
+                            ? "border-[#000000] bg-[#FFFDF0]"
+                            : "border-[#000000] bg-[#FFFFFF]"
+                        }`}
+                      >
+                        {/* Header Row */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E5E5] pb-2 mb-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span
+                              className={`px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                                isError
+                                  ? "bg-[#DE2626] text-[#FFFFFF]"
+                                  : log.level === "WARN"
+                                  ? "bg-[#000000] text-[#DE2626]"
+                                  : log.level === "SUCCESS"
+                                  ? "bg-[#000000] text-[#FFFFFF]"
+                                  : "bg-[#EEEEEE] text-[#000000]"
+                              }`}
+                            >
+                              {log.level}
+                            </span>
+
+                            <span className="text-[10px] font-bold text-[#666666] bg-[#EEEEEE] px-1.5 py-0.5">
+                              {log.category}
+                            </span>
+
+                            <span className="text-[11px] text-[#555555]">
+                              {log.timeFormatted}
+                            </span>
+
+                            {log.endpoint && (
+                              <span className="text-[10px] text-[#000000] font-bold bg-[#EAEAEA] px-1.5 py-0.5">
+                                {log.method || "POST"} {log.endpoint}
+                                {log.status ? ` [${log.status}]` : ""}
+                                {log.durationMs !== undefined ? ` · ${log.durationMs}ms` : ""}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleCopySingleLog(log)}
+                              className="text-[10px] border border-[#000000] px-2 py-0.5 hover:bg-[#DE2626] hover:text-[#FFFFFF] hover:border-[#DE2626] transition-colors cursor-pointer"
+                              title="Copy this single entry"
+                            >
+                              Copy
+                            </button>
+
+                            {(log.requestPayload || log.responsePayload || log.errorDetails) && (
+                              <button
+                                onClick={() => handleToggleExpandLog(log.id)}
+                                className="text-[10px] border border-[#000000] px-2 py-0.5 bg-[#000000] text-[#FFFFFF] hover:bg-[#DE2626] transition-colors cursor-pointer"
+                              >
+                                {isExpanded ? "Hide Details" : "Inspect Payload"}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Title & Summary */}
+                        <div className="space-y-1">
+                          <div className="font-bold text-xs text-[#000000]">
+                            {log.title}
+                          </div>
+                          <div className="text-xs text-[#333333] leading-relaxed whitespace-pre-wrap">
+                            {log.summary}
+                          </div>
+
+                          {/* Prominent Error Box */}
+                          {log.errorMessage && (
+                            <div className="mt-2 p-2.5 bg-[#000000] text-[#FFFFFF] border-l-4 border-[#DE2626] text-xs">
+                              <div className="text-[10px] font-bold uppercase text-[#DE2626]">
+                                Error Message:
+                              </div>
+                              <div className="text-[#FFFFFF] font-bold mt-0.5">
+                                {log.errorMessage}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Expandable Technical Details */}
+                        {isExpanded && (
+                          <div className="mt-3 pt-3 border-t border-[#DDDDDD] space-y-2">
+                            {log.errorDetails && (
+                              <div>
+                                <div className="text-[10px] font-bold uppercase text-[#DE2626] mb-1">
+                                  Error Details &amp; Stack:
+                                </div>
+                                <pre className="p-2 bg-[#000000] text-[#FFFFFF] text-[11px] overflow-x-auto whitespace-pre-wrap">
+                                  {log.errorDetails}
+                                </pre>
+                              </div>
+                            )}
+
+                            {log.requestPayload && (
+                              <div>
+                                <div className="text-[10px] font-bold uppercase text-[#000000] mb-1">
+                                  Request Payload:
+                                </div>
+                                <pre className="p-2 bg-[#FAFAFA] border border-[#DDDDDD] text-[#000000] text-[11px] overflow-x-auto whitespace-pre-wrap">
+                                  {typeof log.requestPayload === "string"
+                                    ? log.requestPayload
+                                    : JSON.stringify(log.requestPayload, null, 2)}
+                                </pre>
+                              </div>
+                            )}
+
+                            {log.responsePayload && (
+                              <div>
+                                <div className="text-[10px] font-bold uppercase text-[#000000] mb-1">
+                                  Response Payload:
+                                </div>
+                                <pre className="p-2 bg-[#FAFAFA] border border-[#DDDDDD] text-[#000000] text-[11px] overflow-x-auto whitespace-pre-wrap">
+                                  {typeof log.responsePayload === "string"
+                                    ? log.responsePayload
+                                    : JSON.stringify(log.responsePayload, null, 2)}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
         </main>
       </div>
 
@@ -2968,10 +3736,10 @@ export default function App() {
                     </p>
                     <div className="grid grid-cols-2 gap-2 pt-2 text-xs font-mono border-t border-[#EEEEEE]">
                       <div>
-                        <span className="text-[#888888]">Version:</span> 3.1.7 (Package 105)
+                        <span className="text-[#888888]">Version:</span> 3.1.12 (Package 109)
                       </div>
                       <div>
-                        <span className="text-[#888888]">Release Date:</span> 2026-09-27
+                        <span className="text-[#888888]">Release Date:</span> 2026-10-02
                       </div>
                     </div>
                   </div>
@@ -3026,7 +3794,7 @@ export default function App() {
                     <h4 className="text-xs font-bold uppercase tracking-wider text-[#000000]">
                       Revision History (bejson_project.json)
                     </h4>
-                    <span className="text-[11px] font-mono text-[#888888]">Current: v3.1.7</span>
+                    <span className="text-[11px] font-mono text-[#888888]">Current: v3.1.12</span>
                   </div>
 
                   <div className="border border-[#000000] p-4 bg-[#FFFFFF] font-mono text-xs text-[#222222] whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto">
